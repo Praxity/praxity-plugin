@@ -1,13 +1,12 @@
 # Rubato
 
 Rubato installs Praxity's tools and skills for learning designers into agent hosts.
-On a Mac, one install gives you five working tools:
+On a Mac, one install gives you four working tools:
 
 - Studio edits a course in the browser or in T3's preview, and exports it as HTML, PDF or SCORM.
 - Check audits an exported course, including for accessibility.
 - Trace writes a report on an exported HTML course.
 - Print renders Markdown to PDF.
-- Import converts a SCORM package into a Praxity course.
 
 The pack also installs private Node and Typst runtimes, a `praxity` command,
 T3 course actions and skills for T3, Claude Code and Codex CLI. There is no SDK
@@ -64,7 +63,7 @@ need Node or administrator rights.
 
 Keep this `rubato` folder. You need its `install.sh` to uninstall Rubato.
 
-The installer downloads Node, Typst and the five tools, checks each against
+The installer downloads Node, Typst and the four tools, checks each against
 the SHA-256 in `pack.json`, then runs the doctor. It installs to
 `~/.praxity/toolkit/0.2.0/` and creates `~/.praxity/bin/praxity`.
 On an Apple Silicon Mac it installs native arm64 runtimes, even from a
@@ -96,15 +95,15 @@ Everyday commands:
 ~/.praxity/bin/praxity check ...
 ~/.praxity/bin/praxity trace ...
 ~/.praxity/bin/praxity print ...
-~/.praxity/bin/praxity import ...
 ~/.praxity/bin/praxity studio . --no-open
 ```
 
 `setup [tool]` delegates to each installed tool's setup with its consent prompts.
 For example, `praxity setup check browser` forwards `setup browser` to Check.
-It never adds `--yes`. Every other subcommand and its arguments reach Studio
+It never adds `--yes`. Studio subcommands and their arguments reach Studio
 unchanged. Rubato reserves `setup`, `doctor`, `version`, `update`, `rollback`,
-`skills`, `init`, `action`, `check`, `trace`, `print` and `import`.
+`skills`, `init`, `action`, `check`, `trace` and `print`.
+`praxity import` exits with "Import isn't included in this release."
 
 ## Try it on the sample course
 
@@ -249,6 +248,8 @@ Updates retain the previous version. Both version pointers change in one atomic
 rename. Rollback checks the destination pack and keeps the outgoing pack, even
 when its contents are damaged. Save and close Studio before switching or removing
 a pack. Rollback and uninstall do not detect dirty editor sessions.
+After rollback, run `praxity skills refresh --scope user` and, in each course
+with project skills, `praxity skills refresh --scope project` to match that pack.
 
 ```sh
 ~/.praxity/bin/praxity rollback
@@ -432,9 +433,8 @@ tools, unused adapters, partial adapters and a missing PATH entry do not fail it
 
 Doctor checks the Node pin and compiles a tiny Typst document. It reads Check's
 own JSON doctor and inspects the bundled tiny Studio course. It runs Trace and
-Print on temporary inputs when installed, and has Import convert its shipped
-SCORM fixture. It checks the shared Claude and Codex skill folders at both
-scopes, with `host.claude` and `host.codex` items. An adapter missing some of
+Print on temporary inputs when installed. It checks the shared Claude and Codex
+skill folders at both scopes, with `host.claude` and `host.codex` items. An adapter missing some of
 this pack's skills, or holding changed copies, is `partial`; its message names
 those skills and its fix is the `praxity skills install` command that refreshes
 them. Install backs up edited copies before replacing recorded Rubato folders.
@@ -464,7 +464,7 @@ A component that works counts as ok, even if you refused it earlier.
 ## Licences
 
 - Rubato's own scripts, skills and adapters are MIT-licensed (see [`LICENSE`](LICENSE)).
-- Studio, Check, Trace, Print and Import keep their own licence, PolyForm
+- Studio, Check, Trace and Print keep their own licence, PolyForm
   Perimeter 1.0.1. Each tool's archive holds its licence, Required Notices
   and third-party notices; installing or adapting a tool does not relicense it.
   After install they are under `~/.praxity/toolkit/0.2.0/tools/<tool>/`.
@@ -494,9 +494,10 @@ A component that works counts as ok, even if you refused it earlier.
 
 ## Development
 
-Use Node >=24.18 and <25. There are no package dependencies.
+Use Node >=24.18 and <25. There are no runtime package dependencies. Run `npm ci` to install the development-only comment checker dependency.
 
 ```sh
+npm run lint
 npm run validate
 node --test
 ```
@@ -532,7 +533,7 @@ on every platform in `platforms`; regular validation still permits staged packs.
 ### Launcher
 
 The launcher selects the active pack and uses its private Node. It sets Print's
-`PRAXITY_PRINT_TYPST` and Import's `PRAXITY_CLI` to absolute pack paths. Studio's
+`PRAXITY_PRINT_TYPST` to an absolute pack path. Studio's
 present standalone publisher still needs a supported shared-Typst option.
 Node Studio launches receive a private IPC channel so Studio can detect launcher
 death during startup. Executable runners receive `PRAXITY_PARENT_PID` with the
@@ -607,12 +608,12 @@ before marking the release latest; update refuses incomplete releases.
 
 Each release attaches Studio's two archives, `pack.json`, the bootstrap and
 `SHA256SUMS`. Check,
-Trace, Print and Import archives stay attached to the earlier Rubato release that
+Trace and Print archives stay attached to the earlier Rubato release that
 first published them, including asset-only prereleases that hold verified tool
 archives without a pack manifest. These are byte-for-byte copies of the owning
 tools' releases; each pin records the archive's SHA-256 and, where known, its
 full source revision. An asset-only release does not update the stable channel
-or publish a pack. Check, Trace, Print and Import use the same archives on
+or publish a pack. Check, Trace and Print use the same archives on
 Apple Silicon and Intel Macs. Print's asset name keeps `darwin-arm64` for
 compatibility; its payload inventory declares it portable. Other platform
 entries stay `unpublished`, with the reason recorded beside each.
