@@ -8,8 +8,11 @@ main() {
 
   step() { printf '\n== %s\n' "$1"; }
 
+  if [ -e "$toolkit" ] || [ -L "$toolkit" ]; then
+    echo "$toolkit already exists. Move or delete it, then run this command again."
+    exit 1
+  fi
   step "Downloading Rubato to $toolkit"
-  rm -rf "$toolkit"
   curl -fsSL https://github.com/Praxity/rubato/archive/refs/heads/main.tar.gz | tar xz -C "$HOME"
 
   step "Installing the pack and checking it (no administrator rights needed)"
