@@ -1,17 +1,22 @@
 # Rubato
 
-Rubato installs Praxity's tools and skills for learning designers into agent hosts.
-On a Mac, one install gives you four working tools:
+Rubato installs Praxity's course-building tools on your Mac, and teaches your AI
+agent (T3 Code, Claude Code or Codex CLI) how to use them. One install gives you
+four tools:
 
 - Studio edits a course in the browser or in T3's preview, and exports it as HTML, PDF or SCORM.
 - Check audits an exported course, including for accessibility.
 - Trace writes a report on an exported HTML course.
 - Print renders Markdown to PDF.
 
-The pack also installs private Node and Typst runtimes, a `praxity` command,
-T3 course actions and skills for T3, Claude Code and Codex CLI. There is no SDK
-or MCP server. `pack.json` pins every archive by URL and SHA-256.
-Studio opens grammar 4 courses only.
+The install also brings its own copies of Node and Typst, the programs the tools
+run on, so you don't install those yourself. You get one command, `praxity`,
+that runs every tool, plus skills that tell your agent how to use them.
+
+Studio opens courses written in grammar 4, the current version of Praxity's
+course file format. The sample course below and any course your agent writes
+with Rubato's skills use grammar 4. Studio can't open courses in the older
+grammar 3 format, and no converter is available.
 
 What changed in this release: [0.2.0 release notes](docs/release-notes/0.2.0.md).
 Earlier notes are in [`docs/release-notes/`](docs/release-notes/).
@@ -28,12 +33,14 @@ support is planned for the next release.
 
 ## Install Rubato 0.2.0
 
-You need a Mac with `curl`, `tar` and `shasum`, which macOS includes. You don't
-need Node or administrator rights.
+You need a Mac and the Terminal app. You don't need Node or administrator
+rights. Run each block in Terminal.
 
-1. Download the release and its checksum list into a new folder:
+1. Download the release and its checksum list into a new folder in your home
+   folder:
 
    ```sh
+   cd ~
    mkdir rubato-0.2.0 && cd rubato-0.2.0
    base=https://github.com/Praxity/rubato/releases/download/v0.2.0
    curl -fsSLO "$base/rubato-0.2.0.tar.gz"
@@ -61,204 +68,282 @@ need Node or administrator rights.
    sh install.sh
    ```
 
-Keep this `rubato` folder. You need its `install.sh` to uninstall Rubato.
+   The installer downloads Node, Typst and the four tools, checks each one,
+   then runs `praxity doctor`, a self-test of every tool. It ends with
+   `Installed pack 0.2.0.` If it stops with an error instead, see
+   [Fix a failed install](#fix-a-failed-install).
 
-The installer downloads Node, Typst and the four tools, checks each against
-the SHA-256 in `pack.json`, then runs the doctor. It installs to
-`~/.praxity/toolkit/0.2.0/` and creates `~/.praxity/bin/praxity`.
-On an Apple Silicon Mac it installs native arm64 runtimes, even from a
-Terminal running under Rosetta.
+   Keep the `~/rubato-0.2.0/rubato` folder. You need it to uninstall Rubato.
 
-Add the line the installer prints to your shell configuration yourself:
+4. Make the `praxity` command available in new Terminal windows. macOS uses
+   the zsh shell, which reads `~/.zshrc`:
 
-```sh
-export PATH="$HOME/.praxity/bin:$PATH"
-```
+   ```sh
+   echo 'export PATH="$HOME/.praxity/bin:$PATH"' >> ~/.zshrc
+   ```
 
-Use `~/.praxity/bin/praxity` directly until your shell and host have the new PATH.
-T3 course actions call it by that path, so they work before you edit PATH.
-The doctor's `launcher.path` item says whether `praxity` is on PATH and names
-the line to add. Neither the installer nor the doctor edits shell files.
+   Open a new Terminal window, then check that it works. The command prints the
+   installed version:
 
-Then install the skills for your host (see [Skills](#skills)):
+   ```sh
+   praxity version
+   ```
 
-```sh
-~/.praxity/bin/praxity skills install --host claude --scope user
-```
+   Quit and reopen T3 Code, or start a new Claude Code or Codex session, so it
+   sees the command too. Until then, use the full path
+   `~/.praxity/bin/praxity`. T3's course actions already use that path.
 
-Everyday commands:
+5. Install the skills for your agent:
 
-```sh
-~/.praxity/bin/praxity setup
-~/.praxity/bin/praxity doctor --json
-~/.praxity/bin/praxity version
-~/.praxity/bin/praxity check ...
-~/.praxity/bin/praxity trace ...
-~/.praxity/bin/praxity print ...
-~/.praxity/bin/praxity studio . --no-open
-```
+   | You use | Run |
+   |---|---|
+   | Claude Code, or T3 Code with Claude | `praxity skills install --host claude --scope user` |
+   | Codex CLI, or T3 Code with Codex | `praxity skills install --host codex --scope user` |
 
-`setup [tool]` delegates to each installed tool's setup with its consent prompts.
-For example, `praxity setup check browser` forwards `setup browser` to Check.
-It never adds `--yes`. Studio subcommands and their arguments reach Studio
-unchanged. Rubato reserves `setup`, `doctor`, `version`, `update`, `rollback`,
-`skills`, `init`, `action`, `check`, `trace` and `print`.
-`praxity import` exits with "Import isn't included in this release."
+   If you use both, run both. Then start a new session in your agent and check
+   that the skills appear (see [Skills](#skills)).
 
-## Try it on the sample course
+## Open the sample course
 
-To try the latest development version on `main` instead, one command downloads
-Rubato to `~/rubato-main`, installs the pack, runs the doctor and opens Studio's
-editor in Safari on a copy of the sample course:
+Copy the sample course that came with the release, then open it in Studio:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Praxity/rubato/main/try.sh | sh
+cp -R ~/rubato-0.2.0/rubato/fixtures/course ~/praxity-sample-course
+praxity studio ~/praxity-sample-course
 ```
 
-Read [`try.sh`](try.sh) first if you prefer; it touches only `~/rubato-main`,
-`~/.praxity` and `~/praxity-trial-course`. If `~/rubato-main` already exists,
-the script stops without changing anything; move or delete that folder and run
-it again. It reuses an existing `~/praxity-trial-course`. If the install fails
-but an earlier Rubato is installed, it opens Studio from that earlier version.
-Press Ctrl+C to stop Studio.
+Studio opens the course in your default browser, in Read mode. Select
+**Edit text** to change text; Enter saves and Escape cancels. To stop Studio,
+press Ctrl+C in the Terminal window.
+
+To start your own course, copy the sample course to a new folder, or ask your
+agent to write one. Its Studio skill teaches it the course format.
+
+## Everyday commands
+
+Your agent usually runs these for you; the skills tell it how. You can also run
+them yourself in a course folder:
+
+| Command | What it does |
+|---|---|
+| `praxity studio .` | Opens the course in this folder in Studio. |
+| `praxity export . --format html --output course-html.zip` | Exports the course as HTML. Use `--format pdf --output course.pdf` for PDF. |
+| `praxity check check course-html.zip --checks accessibility` | Runs Check's accessibility audit on the exported course. |
+| `praxity doctor` | Tests every tool and tells you how to fix what's wrong. See [Doctor](#doctor). |
+| `praxity setup check` | Offers Check's optional downloads, and asks before each one. |
+| `praxity version` | Shows the installed Rubato version. |
+
+Trace and Print take more options. Ask your agent to run them, or run
+`praxity print --help`. `praxity import` exits with "Import isn't included in
+this release."
 
 ## Update
 
-```sh
-~/.praxity/bin/praxity update
-```
+1. Save your work in every Studio tab and close the tabs.
+2. Stop Studio: stop the Open in Studio action in T3, or press Ctrl+C in the
+   Terminal window where Studio runs. Update refuses while Studio is running,
+   because it can't tell whether a tab holds unsaved text.
+3. Run:
 
-Save or copy unsaved text in every Studio tab, close the tabs, then stop the
-Studio action in T3 or press Ctrl+C in its terminal. Update refuses while a Studio process from an
-installed Rubato pack is running, because it cannot know whether a browser
-holds unsaved text. It sends no signals to Studio or other processes.
-The next Studio launch uses the new pack. A running process is never updated
-in place.
+   ```sh
+   praxity update
+   ```
 
-The command follows the official stable channel configured in
-`src/update.mjs`, the latest immutable published non-prerelease at `Praxity/rubato`.
-It accepts no alternate channel, manifest URL or digest flags. It downloads
-`pack.json`, `rubato-<version>.tar.gz` and `SHA256SUMS` from that release,
-checks both downloads against the checksum list, checks that the manifest
-matches the release tag and bootstrap, then validates against that verified
-release's own schema and runs its installer. New manifest fields need not be
-known to the installed pack. The GitHub JSON Accept header is sent only to
-the metadata API; asset downloads use the server's default representation.
-Local fixtures check these headers. The tests include no recorded or live
-GitHub asset response.
-The installer verifies runtime and tool archives and activates the pack with
-its atomic version switch. The previous pack
-remains available to `praxity rollback`. Downloads or checksum failures leave
-the old pack active. A doctor failure after activation restores the previous
-activation and exits nonzero. A failed first activation removes its active
-pointer and launcher. The failed pack stays owned for inspection or retry.
+Update downloads the latest Rubato release from GitHub, checks it, installs it
+and runs the doctor. If a download, a check or the doctor fails, your current
+version stays active. When the new version is in place, the installer prints
+`Installed pack` and the new version number.
 
-Using this command trusts GitHub's HTTPS delivery and the people with release
-access to `Praxity/rubato` to supply executable bootstrap code and its manifest.
-A checksum from the same release checks integrity. It is not an independent
-signature and does not protect against a compromised release account.
-Manual installation of arbitrary manifests keeps the reviewed digest rules
-described under Install.
+Update then refreshes your skills. If only that step fails, the new version
+stays active, and the message names the command to run again. Start a new
+agent session to pick up changed skills.
 
-Installation refreshes owned user skills. Update also runs the same skill
-refresh command at project scope in the nearest parent directory with a
-Rubato skills ownership record, including the current directory. The home
-directory remains user scope. No ownership record means no project skills
-are added. Refresh backs up locally edited Rubato skill folders before replacing
-them and preserves skills with other names. A failed refresh names the command to retry.
-A pack can be active even when a skill refresh fails.
-Start a new host session if it needs to discover changed skills.
-
-`praxity version`, also available as `praxity --version`, reports the active pack and `studioSha`. New releases record
-the full tested Studio commit in the Studio tool's optional `sourceRevision` field.
-Older packs report the abbreviated SHA in a `-main.<sha>` Studio version, or
-`null` when the manifest does not identify one.
+Rubato 0.1.1 and earlier don't have `praxity update`. To move from those, follow
+[Install Rubato 0.2.0](#install-rubato-020). Your courses and skills stay.
 
 ## Course actions in T3 Code
 
-Run `praxity init [folder]` in a course with `course.yaml` or `.prax` lessons.
-It writes a commit-ready `t3.json` with Open in Studio, Export HTML, Export PDF,
-Check accessibility and Doctor actions. Exports write `course-html.zip` and
-`course.pdf`; export HTML before running the accessibility check.
-Open in Studio and both export actions use `praxity action studio|export <course> [options]`.
-This runs Studio's `identity init <course>` for the same course before the target command. If initialization fails, including pending identity or a
-need for `--rederive`, the action stops, shows Studio's report and asks you to
-ask your agent how to proceed. The actions never rederive identity automatically.
-T3 opens the Open in Studio preview when the action starts, even if initialization
-fails; the terminal shows why it stopped.
-These actions require a Rubato pack with the `action` command. If an older pack
-reports an expected-command error, run `praxity update`. After a deliberate
-rollback, rerun that pack's `praxity init` to restore its compatible actions and
-reimport them in T3.
-Other keys and scripts stay intact, including commands you customised.
-Invalid JSON is refused unchanged.
+T3 Code can show buttons for a course: Open in Studio, Export HTML, Export PDF,
+Check accessibility and Doctor.
 
-Init also hides `.praxity/`, `.praxity-write-*` recovery copies and
-`.praxity-transaction.json` in VS Code's file explorer and search through
-`.vscode/settings.json`. It preserves author settings, including explicit
-`false` values, and reports those overrides. Settings with comments or values
-that cannot be safely rewritten stay unchanged; init prints the entries to add.
-It records its additions in the private course registry and never changes Git
-ignore rules. Keep `.praxity/` identity data in Git.
+1. In Terminal, go to your course folder (the folder with `course.yaml` or
+   `.prax` lesson files) and run:
 
-Studio keeps a course port in 41700-41999, reserved in
-`~/.praxity/toolkit-state/t3-actions.json`. Rerunning init keeps that port and
-upgrades recognised actions written by earlier versions.
-T3 keeps a saved copy of imported actions. After init changes those actions,
-delete each stale saved Praxity action in T3's project Actions settings and import
-it again from `t3.json`, or edit its saved command to match `t3.json`.
-`praxity doctor` also warns when a course's `t3.json` actions differ from the
-current generator; rerun `praxity init` in that course, then reimport the actions.
-It warns per project when saved Praxity actions differ from that
-project's file. Optional settings and project JSON reads are limited to 4 MiB
-each. It queries the project mapping from a private copy of `statev2.sqlite`
-and its committed WAL, with a 128 MiB limit per snapshot file. It never opens
-the live database with SQLite. Missing, unreadable, oversize or changing T3
-files and mappings with a rollback journal are skipped.
-Generated actions use relative paths and a loopback `/launch` URL, with no tokens
-or machine paths. They call the launcher as `"$HOME/.praxity/bin/praxity"`,
-which the shell expands on each machine, because T3 runs actions in a login
-shell that may not have `~/.praxity/bin` on PATH. Open in Studio passes
-`--no-open`, so the editor opens in T3's preview and not in your default
-browser. Automatic editor preview needs T3 desktop and Studio's
-`--port` and `/launch` support. An occupied port makes Studio fail clearly;
-close the process using it before retrying.
+   ```sh
+   praxity init
+   ```
 
-## Recovery
+   This writes the actions into a `t3.json` file in the course folder.
+2. In T3, open the project's Actions settings and import the actions from
+   `t3.json`.
 
-Rerun the same installer after a failed download or interruption. Complete
-SHA-256-verified archives remain in the cache; partial downloads restart.
-Each run builds in a fresh temporary directory. A crashed run is repaired by
-rerunning install.
-If a stopped run left `~/.praxity/toolkit/.install.lock`, delete that directory
-before rerunning.
+Export HTML writes `course-html.zip`, and Export PDF writes `course.pdf`.
+Run Export HTML before Check accessibility, which checks that file. Open in
+Studio shows the editor in T3's preview.
 
-The installer owns everything in `~/.praxity/toolkit` and the launcher at
-`~/.praxity/bin/praxity`. Keep personal files outside these paths. Checksum
-failures publish no version or launcher. Installed file damage is refused.
-Roll back to an intact previous pack, or uninstall and reinstall. A different
-manifest needs a new pack version. There is no migration of prerelease installs.
-Old files `~/.praxity-toolkit-bootstrap.tsv`, `~/.praxity/toolkit/.install-ledger.tsv` and `~/.praxity/toolkit/.bootstrap-*` can be deleted.
+### When an action stops before opening or exporting
 
-Activation writes both version pointers to a temporary file, then renames it to
-`active`. If the version check or doctor fails, it restores the previous `active`
-with another rename. After an interruption, rerun install to check the pack again.
+Before Open in Studio and the exports run, they set up course identity. Course
+identity is the set of IDs Studio gives each lesson and block, stored in the
+course's `.praxity/` folder. Published courses use these IDs to keep learners'
+saved progress and your review comments attached to the right content.
 
-Updates retain the previous version. Both version pointers change in one atomic
-rename. Rollback checks the destination pack and keeps the outgoing pack, even
-when its contents are damaged. Save and close Studio before switching or removing
-a pack. Rollback and uninstall do not detect dirty editor sessions.
-After rollback, run `praxity skills refresh --scope user` and, in each course
-with project skills, `praxity skills refresh --scope project` to match that pack.
+If a change to the course would replace existing IDs, the action stops and shows
+Studio's report, and asks you to ask your agent how to proceed. Replacing IDs is
+safe only for a course you haven't published. The actions never replace them
+on their own. T3 opens the Studio preview anyway; the terminal shows why
+Studio didn't start.
+
+If Studio reports that its port is in use, Studio is probably already running
+for this course in another T3 action or Terminal window. Stop it there. To see
+what holds the port, run `lsof -nP -iTCP:<port> -sTCP:LISTEN` with the port
+number from Studio's message.
+
+### After an update
+
+T3 keeps its own saved copy of imported actions. When Rubato's actions change,
+`praxity doctor` warns you. Run `praxity init` in the course again, then in
+T3's Actions settings delete each saved Praxity action and import it again from
+`t3.json`. `praxity init` keeps actions you added or changed yourself.
+
+`praxity init` also hides Studio's identity and recovery files in VS Code's
+file explorer and search, and leaves your own VS Code settings as they are.
+Keep the `.praxity/` folder with your course, including in Git.
+
+## Skills
+
+Rubato installs four skills of its own:
+
+- `install-praxity` installs, updates and repairs Rubato.
+- `studio-editor` opens and edits courses in Studio.
+- [`composer`](skills/composer/SKILL.md) turns a brief into a course outline,
+  and coordinates writing and review.
+- [`assessment-writing`](skills/assessment-writing/SKILL.md) helps you write
+  multiple-choice questions: wrong answers drawn from common misconceptions,
+  feedback for each answer, and checks that learners can't pick the right
+  answer from clues in the wording.
+
+Each tool adds its own skill as well, such as `prax-format` for Studio's course
+format, `praxity-check` and `praxity-trace`, so your agent lists more than
+these four.
+
+### Choose host and scope
+
+`--host claude` installs for Claude Code and for T3 Code with Claude.
+`--host codex` installs for Codex CLI and for T3 Code with Codex. `--host t3`
+is another name for `claude`.
+
+`--scope user` makes the skills available in every project. Use it unless you
+have a reason not to. `--scope project` installs them only in the folder where
+you run the command, so run it in the project's top folder. One host can't
+have Rubato's skills in both scopes at once.
+
+### Check that your agent sees them
+
+- **Claude Code.** Start a new session, type `/` and look for
+  `install-praxity` and `studio-editor`, or ask which skills it can see.
+  See [Claude Code skill discovery](https://code.claude.com/docs/en/skills).
+- **Codex CLI.** Start Codex in the project, run `/skills` or type `$`, and
+  look for the four skills above. See
+  [Codex skill discovery](https://learn.chatgpt.com/docs/build-skills).
+- **T3 Code.** Start a new thread with each provider you use. Type `$` in the
+  composer and select `install-praxity` or `studio-editor`. If project skills
+  don't show in the picker, use user scope and check again.
+
+Claude skills live in `~/.claude/skills/`, and Codex skills in
+`~/.agents/skills/`. With project scope they go in `.claude/skills` or
+`.agents/skills` in the project. Rubato never edits host settings, shell
+configuration or AGENTS files.
+
+### Your own edits
+
+If you edit one of Rubato's installed skills, Rubato copies your version to
+`~/.praxity/skill-backups/` before an update, refresh or uninstall replaces it.
+It prints the backup's path. To keep a customised skill, save it under a
+different name.
+
+If you copied Rubato's skills into a skills folder by hand, installing stops
+because the folders already exist. To let Rubato take them over, list the
+differences first, then confirm:
 
 ```sh
-~/.praxity/bin/praxity rollback
-sh /path/to/rubato/install.sh uninstall
+praxity skills install --host claude --scope user --adopt
+praxity skills install --host claude --scope user --adopt --yes
 ```
 
-Uninstall removes `~/.praxity/toolkit` and `~/.praxity/bin/praxity`, including
-any modified files inside them. It preserves optional tool components,
-generated host skills and other `~/.praxity` data.
+Use `--host codex` for Codex. The first command changes nothing; it lists which
+files differ. The second backs up your copies, then replaces them.
+
+### Refresh or remove skills
+
+Installing and updating refresh user-scope skills. For project scope, run
+`praxity skills refresh --scope project` in the project. If a refresh stops,
+run the same command again.
+
+To remove one host's skills, run `praxity skills uninstall --host claude --scope user`
+or use `--host codex`. Skills for the other host stay.
+
+## Doctor
+
+Run `praxity doctor` to test the install. It compiles a small document with
+Typst, has Studio inspect a small sample course, and runs Check, Trace and
+Print on test inputs. Each line shows one check:
+
+```text
+<check>: <status> | <what it found> | fix: <what to do>
+```
+
+| Status | Meaning |
+|---|---|
+| `ok` | Works. |
+| `failed` | Broken. Run the command after `fix:`. |
+| `partial` | Some skills are missing or edited. Run the command after `fix:` to refresh them. |
+| `not-installed` | Not set up. For Typst or a tool, run the command after `fix:`. For skills of a host you don't use, or an optional download, you can leave it. |
+| `declined` | An optional download you said no to in setup. |
+
+Fix every `failed` line, and any `not-installed` line for Typst or a tool,
+before you continue. The doctor doesn't open the
+editor or run a full Check audit.
+
+## Fix a failed install
+
+- **Download failed or was interrupted.** Run `sh install.sh` again from
+  `~/rubato-0.2.0/rubato`. Downloads that finished and passed their check are
+  kept.
+- **"Another install is running".** Make sure no other Terminal window is
+  running the installer or `praxity update`, then remove the leftover lock and
+  run the installer again:
+
+  ```sh
+  rmdir ~/.praxity/toolkit/.install.lock
+  ```
+
+- **The doctor failed after installing.** The installer puts back the version
+  you had before, if any. Fix what the doctor reported, then run the
+  installer again.
+- **Installed files are damaged.** Go back to the previous version (below), or
+  remove Rubato and install again.
+
+## Go back to the previous version
+
+Rubato keeps the version you had before the last update.
+
+1. Save your work in Studio, close its tabs, and stop Studio.
+2. Switch back:
+
+   ```sh
+   praxity rollback
+   ```
+
+3. Put back that version's skills. Run this, and run it with
+   `--scope project` in each project where you installed project skills:
+
+   ```sh
+   praxity skills refresh --scope user
+   ```
+
+4. In each course you use with T3, run `praxity init` again and reimport the
+   actions in T3, so they match the older version.
 
 ## Remove Rubato
 
@@ -267,189 +352,43 @@ are, including each course's `.praxity/` identity folder, `t3.json` and
 `.vscode/settings.json`.
 
 1. Save your work in Studio, close its tabs, and stop Studio.
-2. Remove the skills from each host and scope you installed them in. For user scope:
+2. Remove the skills from each host you installed them for:
 
    ```sh
-   ~/.praxity/bin/praxity skills uninstall --host claude --scope user
-   ~/.praxity/bin/praxity skills uninstall --host codex --scope user
+   praxity skills uninstall --host claude --scope user
+   praxity skills uninstall --host codex --scope user
    ```
 
-   For project scope, run the same commands with `--scope project` in each
-   project folder where you installed skills. Edited skills are backed up first.
-3. Remove the pack and the `praxity` command, using the `rubato` folder you
-   installed from (download it again as in [Install](#install-rubato-020) if
-   you deleted it):
+   If you installed project skills, run the same commands with
+   `--scope project` in each of those projects. Edited skills are backed up first.
+3. Remove Rubato's tools and the `praxity` command. It prints `Rubato removed.`:
 
    ```sh
-   sh /path/to/rubato/install.sh uninstall
+   cd ~/rubato-0.2.0/rubato
+   sh install.sh uninstall
    ```
 
-4. Remove Check's optional downloads (browser, Java, veraPDF), if you ran its setup:
+   If you deleted that folder, download and unpack the release again, as in
+   steps 1 to 3 of [Install](#install-rubato-020), without running the installer.
+4. If you ran Check's setup, remove its optional downloads (browser, Java,
+   veraPDF):
 
    ```sh
    rm -rf ~/Library/Application\ Support/Praxity\ Check
    ```
 
 5. Copy any skill edits you want to keep out of `~/.praxity/skill-backups/`.
-   The rest of `~/.praxity` holds port reservations, setup refusals and skill
-   ownership records. Then delete the folder:
+   The rest of `~/.praxity` holds settings Rubato no longer needs: course port
+   numbers, your setup answers and its list of installed skills. Then delete
+   the folder:
 
    ```sh
    rm -rf ~/.praxity
    ```
 
-6. Remove the `export PATH="$HOME/.praxity/bin:$PATH"` line from your shell
-   configuration.
+6. Open `~/.zshrc` in a text editor and delete the line
+   `export PATH="$HOME/.praxity/bin:$PATH"`.
 7. In T3, delete the saved Praxity actions in each project's Actions settings.
-
-## Skills
-
-Rubato owns `skills/install-praxity`, `skills/studio-editor`,
-[`skills/composer`](skills/composer/SKILL.md) and
-[`skills/assessment-writing`](skills/assessment-writing/SKILL.md). Composer turns
-briefs into course outlines and coordinates writing and review. The assessment
-skill teaches misconception-based distractors, case-specific feedback and independent probes. Each tool
-owns the skill and references shipped in its archive. The generator collects
-installed tools' skill folders without rewriting them.
-
-```sh
-node scripts/build-adapters.mjs --output dist/adapters
-node scripts/build-adapters.mjs --installed "$HOME/.praxity/toolkit/0.2.0" --output dist/installed-adapters
-praxity skills install --host t3 --scope user
-```
-
-Choose `--host t3|claude|codex` and `--scope user|project`. Project scope means
-the current directory. Install at the actual project root. There are two
-adapters: `claude` and `codex`. `t3` remains an alias for `claude`.
-
-Both adapters may coexist in one scope. Installing another adapter retains the
-first. A same-host copy in the other scope blocks a competing installation.
-Rubato does not edit host settings, shell profiles or AGENTS files.
-
-An unowned folder with a shipped skill's name blocks install. To adopt skills
-copied by hand, preview the file differences first:
-
-```sh
-praxity skills install --host claude --scope user --adopt
-praxity skills install --host claude --scope user --adopt --yes
-```
-
-Use `--host codex` for Codex. `--adopt` alone lists each file as unchanged,
-changed, existing only or packaged only and exits nonzero without changing
-anything. Changed files include byte counts and short SHA-256 fingerprints.
-Review that summary before adding `--yes`. This rule is the same in terminals
-and scripts; Rubato never prompts or assumes consent. Confirmed adoption prints
-the summary again for every existing folder it will replace or remove. It
-separates unowned adoption from owned replacement or removal and names files
-that will disappear from the installed folder. It backs up each unowned folder
-and any owned folder containing changed or extra files before replacing them.
-Backups for both scopes stay under `~/.praxity/skill-backups/`, outside the
-project: `user/<host>/` for user scope, `project-<path-hash>/<host>/` for project
-scope. Each backup has a timestamp and a unique suffix. Rubato copies the entire
-folder and publishes the complete backup before recording ownership or deleting
-originals, including when home and project are on different volumes. It prints
-each completed backup path. Keep those backups until you have recovered any
-local changes. Project ownership and installed files stay in the project.
-Unowned folders with other names stay untouched.
-The competing-scope and path-safety checks still apply.
-
-Rubato owns its installed skill folders by name. Install and refresh delete
-recorded folders and copy fresh content. Locally edited folders are backed up
-under `~/.praxity/skill-backups` first, including added files. Folders installed
-before file digests were recorded are backed up on their first refresh.
-`praxity skills uninstall` also backs up locally edited recorded folders before removing them.
-Keep custom skills under different names. There is no migration of former plugin layouts or prerelease records.
-
-`.praxity/toolkit-skills.json` records installed hosts and folder names.
-The optional `.praxity/toolkit-skills-digests.json` sidecar records packaged
-content digests. Missing or unreadable digests cause a backup on the next refresh.
-If a file changes during refresh, Rubato stops. Run the command again to restore
-any skills already removed.
-Installing a pack runs `praxity skills refresh --scope user` for recorded hosts,
-so new tool skills appear. Refresh project-scope adapters yourself with
-`praxity skills refresh --scope project` in the project. A failed or interrupted
-copy is repaired by rerunning the same command.
-
-Remove one adapter with `praxity skills uninstall --host claude --scope user`
-or `--host codex`. The other adapter remains installed. `--host t3` removes the
-shared Claude adapter. Pack uninstall still preserves host skills.
-
-### T3 Code
-
-For T3's Claude provider:
-
-```sh
-praxity skills install --host t3 --scope user
-```
-
-Files land in `~/.claude/skills/<name>/SKILL.md`, also used by Claude Code.
-For T3's Codex provider, additionally run
-`praxity skills install --host codex --scope user`. Those files land in
-`~/.agents/skills/<name>/SKILL.md`, also used by Codex CLI. Project scope uses
-the corresponding folders under the current project.
-
-Start a new thread with each provider. Type `$` in the composer, select
-`install-praxity` or `studio-editor`, and confirm the thread can use it.
-T3's [Claude provider docs](https://github.com/pingdotgg/t3code/blob/main/docs/user/providers-claude.md)
-describe its skill folders; its [Codex provider](https://github.com/pingdotgg/t3code/blob/main/apps/server/src/provider/Layers/CodexProvider.ts)
-asks the Codex app server for the project's skill inventory. With a custom
-provider home or a remote server, install where that provider runs. If your
-T3 version misses project skills in the picker, use user scope and check again.
-
-### Codex CLI
-
-```sh
-praxity skills install --host codex --scope user
-```
-
-Files land in `~/.agents/skills/<name>/SKILL.md`. With `--scope project`, they
-land in `.agents/skills` under the current project. Codex also scans parent
-folders up to the repository root. Start Codex in the project, run `/skills`
-or type `$`, and confirm Rubato's four skills appear: `install-praxity`,
-`studio-editor`, `composer` and `assessment-writing`. Ask it to list the
-available Praxity skills before invoking one. See [Codex skill discovery](https://learn.chatgpt.com/docs/build-skills).
-
-### Claude Code
-
-```sh
-praxity skills install --host claude --scope user
-```
-
-Files land in `~/.claude/skills/<name>/SKILL.md`. With `--scope project`, they
-land in `.claude/skills` under the current project. Start a new Claude session
-in the project, type `/` and look for `install-praxity` and `studio-editor`,
-or ask which skills it can see. Plain skills load automatically; no plugin
-flag is needed. See [Claude Code skill discovery](https://code.claude.com/docs/en/skills).
-
-File presence in doctor proves the adapter was copied. Verify the inventory
-and invocation in the host to confirm runtime discovery.
-
-## Doctor
-
-`schemas/doctor.schema.json` defines JSON version 2, which added `partial`. Each item has an `id`,
-`status`, `message` and `fix`. Status is `ok`, `failed`, `declined`,
-`not-installed` or `partial`. Exit code 1 means at least one failure. Missing
-tools, unused adapters, partial adapters and a missing PATH entry do not fail it.
-
-Doctor checks the Node pin and compiles a tiny Typst document. It reads Check's
-own JSON doctor and inspects the bundled tiny Studio course. It runs Trace and
-Print on temporary inputs when installed. It checks the shared Claude and Codex
-skill folders at both scopes, with `host.claude` and `host.codex` items. An adapter missing some of
-this pack's skills, or holding changed copies, is `partial`; its message names
-those skills and its fix is the `praxity skills install` command that refreshes
-them. Install backs up edited copies before replacing recorded Rubato folders.
-Unrecorded same-name folders are preserved and block installation until you move them
-aside. `launcher.path` reports whether the first `praxity` on PATH is the
-Rubato launcher.
-Probes time out after 30 seconds and cap captured output at 1 MiB.
-Temporary probe documents are removed. It does not launch an editor or run a
-full Check audit.
-
-Check currently exposes refusal in setup text rather than persistent doctor
-state. Rubato records Check's explicit refusal line from setup run through
-`praxity` in `~/.praxity/toolkit-state/declined.json`, outside pack folders.
-This per-user state survives updates, rollback and uninstall. It cannot see a refusal from Check run on its own.
-A component that works counts as ok, even if you refused it earlier.
 
 ## Known limits
 
@@ -457,9 +396,9 @@ A component that works counts as ok, even if you refused it earlier.
   get Studio's editing link while Studio is running, and use it to edit the
   open course. Run Studio only on a Mac whose other accounts you trust. A fix
   is planned for the next release.
-- Praxity's tools run on your computer. The host you choose and its model
-  provider control telemetry and what they send. An editor link can appear in
-  the host's tool transcript.
+- Praxity's tools run on your computer. The agent you use and its model
+  provider decide what they collect and send. Studio's editing link can appear
+  in your agent's conversation.
 
 ## Licences
 
@@ -483,14 +422,18 @@ A component that works counts as ok, even if you refused it earlier.
   Exception) and veraPDF (GPL-3.0 or later, or MPL-2.0 or later). Check's
   `NOTICE.md` lists them.
 
-## Paste into your agent
+## Ask your agent to install it
 
-> Install Rubato 0.2.0 on this Mac from the extracted release folder. Read its
-> install-praxity skill first. Show the concrete downloads and licences and
-> obtain consent. Run only its reviewed bootstrap. Keep tool setup consent
-> prompts visible, run doctor, and install the adapter for my host and scope.
-> Preserve my shell and AGENTS files. Show PATH and recovery commands. Use the
-> absolute launcher if PATH is stale.
+After steps 1 and 2 of [Install](#install-rubato-020), you can paste this into
+your agent instead of running the rest yourself:
+
+> Install Rubato from `~/rubato-0.2.0`. Unpack `rubato-0.2.0.tar.gz` there,
+> then read `rubato/skills/install-praxity/SKILL.md` and follow it. Before
+> downloading anything, show me what it downloads and the licences, and ask
+> me. Run only that folder's `install.sh`. Keep the tools' setup questions
+> visible to me. Run `praxity doctor`, then install the skills for the agent
+> you're running in, at user scope. Don't change my shell configuration or
+> AGENTS files; show me the PATH line to add instead.
 
 ## Development
 
@@ -509,6 +452,9 @@ reviewed content hashes. CI runs the offline tests on GitHub-hosted Ubuntu, and 
 tests plus a real install in a temporary home on GitHub-hosted Apple Silicon
 (`macos-15`) and Intel (`macos-15-intel`) macOS runners.
 No self-hosted machine runs code from this public repository's pull requests.
+
+Rubato has no SDK or MCP server. `pack.json` pins every archive by URL and
+SHA-256. Rubato calls the installed set of runtimes, tools and skills a pack.
 
 ### Install from a main checkout
 
@@ -530,6 +476,32 @@ integrity against that trusted manifest.
 Before publishing, run `npm run validate:release`. It refuses unpublished tools
 on every platform in `platforms`; regular validation still permits staged packs.
 
+To try the development version on the sample course, one command downloads
+Rubato to `~/rubato-main`, installs the pack, runs the doctor and opens Studio's
+editor in Safari on a copy of the sample course:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Praxity/rubato/main/try.sh | sh
+```
+
+Read [`try.sh`](try.sh) first if you prefer; it touches only `~/rubato-main`,
+`~/.praxity` and `~/praxity-trial-course`. If `~/rubato-main` already exists,
+the script stops without changing anything; move or delete that folder and run
+it again. It reuses an existing `~/praxity-trial-course`. If the install fails
+but an earlier Rubato is installed, it opens Studio from that earlier version.
+Press Ctrl+C to stop Studio.
+
+### Build skill adapters
+
+The generator collects Rubato's `skills/` and each installed tool's packaged
+skill folder without rewriting them. Each tool owns the skill and references
+shipped in its archive.
+
+```sh
+node scripts/build-adapters.mjs --output dist/adapters
+node scripts/build-adapters.mjs --installed "$HOME/.praxity/toolkit/0.2.0" --output dist/installed-adapters
+```
+
 ### Launcher
 
 The launcher selects the active pack and uses its private Node. It sets Print's
@@ -541,6 +513,166 @@ launcher's PID instead. Their Studio bootstrap must consume and remove that
 variable before loading commands or creating descendants. Older executables
 that do not consume it can pass the identity to their descendants. Other tools
 receive neither identity; the launcher's environment remains unchanged.
+
+`setup [tool]` delegates to each installed tool's setup with its consent prompts.
+For example, `praxity setup check browser` forwards `setup browser` to Check.
+It never adds `--yes`. Studio subcommands and their arguments reach Studio
+unchanged. Rubato reserves `setup`, `doctor`, `version`, `update`, `rollback`,
+`skills`, `init`, `action`, `check`, `trace` and `print`.
+
+`praxity version`, also available as `praxity --version`, reports the active pack and `studioSha`. New releases record
+the full tested Studio commit in the Studio tool's optional `sourceRevision` field.
+Older packs report the abbreviated SHA in a `-main.<sha>` Studio version, or
+`null` when the manifest does not identify one.
+
+### Installation, activation and recovery
+
+The installer owns everything in `~/.praxity/toolkit` and the launcher at
+`~/.praxity/bin/praxity`. Keep personal files outside these paths. Complete
+SHA-256-verified archives remain in the cache; partial downloads restart.
+Each run builds in a fresh temporary directory. On Apple Silicon the installer
+chooses native arm64 runtimes, even when launched through Rosetta. Checksum failures publish no
+version or launcher. Installed file damage is refused. A different manifest
+needs a new pack version. There is no migration of prerelease installs.
+Old files `~/.praxity-toolkit-bootstrap.tsv`, `~/.praxity/toolkit/.install-ledger.tsv` and `~/.praxity/toolkit/.bootstrap-*` can be deleted.
+
+Activation writes both version pointers to a temporary file, then renames it to
+`active`. If the version check or doctor fails, it restores the previous `active`
+with another rename. A failed first activation removes its active pointer and
+launcher; the failed pack stays owned for inspection or retry. After an
+interruption, rerun install to check the pack again.
+
+Updates retain the previous version. Rollback checks the destination pack and
+keeps the outgoing pack, even when its contents are damaged. Rollback and
+uninstall do not detect dirty editor sessions. Uninstall removes
+`~/.praxity/toolkit` and `~/.praxity/bin/praxity`, including any modified files
+inside them. It preserves optional tool components, generated host skills and
+other `~/.praxity` data.
+
+### Update channel
+
+`praxity update` follows the official stable channel configured in
+`src/update.mjs`, the latest immutable published non-prerelease at `Praxity/rubato`.
+It accepts no alternate channel, manifest URL or digest flags. It downloads
+`pack.json`, `rubato-<version>.tar.gz` and `SHA256SUMS` from that release,
+checks both downloads against the checksum list, checks that the manifest
+matches the release tag and bootstrap, then validates against that verified
+release's own schema and runs its installer. New manifest fields need not be
+known to the installed pack. The GitHub JSON Accept header is sent only to
+the metadata API; asset downloads use the server's default representation.
+Local fixtures check these headers. The tests include no recorded or live
+GitHub asset response. Update sends no signals to Studio or other processes;
+a running Studio process is never updated in place.
+
+Using this command trusts GitHub's HTTPS delivery and the people with release
+access to `Praxity/rubato` to supply executable bootstrap code and its manifest.
+A checksum from the same release checks integrity. It is not an independent
+signature and does not protect against a compromised release account.
+Manual installation of arbitrary manifests keeps the reviewed digest rules
+described under [Install from a main checkout](#install-from-a-main-checkout).
+
+Update also runs the skill refresh at project scope in the nearest parent
+directory with a Rubato skills ownership record, including the current
+directory. The home directory remains user scope. No ownership record means no
+project skills are added.
+
+### Skills ownership
+
+Rubato owns its installed skill folders by name. Install and refresh delete
+recorded folders and copy fresh content. Locally edited folders are backed up
+under `~/.praxity/skill-backups` first, including added files. Folders installed
+before file digests were recorded are backed up on their first refresh.
+`praxity skills uninstall` also backs up locally edited recorded folders before removing them.
+There is no migration of former plugin layouts or prerelease records.
+
+`.praxity/toolkit-skills.json` records installed hosts and folder names.
+The optional `.praxity/toolkit-skills-digests.json` sidecar records packaged
+content digests. Missing or unreadable digests cause a backup on the next refresh.
+If a file changes during refresh, Rubato stops. Run the command again to restore
+any skills already removed. Installing a pack runs
+`praxity skills refresh --scope user` for recorded hosts, so new tool skills appear.
+
+Both adapters may coexist in one scope. Installing another adapter retains the
+first. A same-host copy in the other scope blocks a competing installation.
+An unowned folder with a shipped skill's name blocks install.
+
+`--adopt` alone lists each file as unchanged, changed, existing only or
+packaged only and exits nonzero without changing anything. Changed files
+include byte counts and short SHA-256 fingerprints. This rule is the same in
+terminals and scripts; Rubato never prompts or assumes consent. Confirmed
+adoption prints the summary again for every existing folder it will replace or
+remove. It separates unowned adoption from owned replacement or removal and
+names files that will disappear from the installed folder. It backs up each
+unowned folder and any owned folder containing changed or extra files before
+replacing them. Backups for both scopes stay under `~/.praxity/skill-backups/`,
+outside the project: `user/<host>/` for user scope, `project-<path-hash>/<host>/`
+for project scope. Each backup has a timestamp and a unique suffix. Rubato
+copies the entire folder and publishes the complete backup before recording
+ownership or deleting originals, including when home and project are on
+different volumes. Project ownership and installed files stay in the project.
+Unowned folders with other names stay untouched. The competing-scope and
+path-safety checks still apply.
+
+T3's [Claude provider docs](https://github.com/pingdotgg/t3code/blob/main/docs/user/providers-claude.md)
+describe its skill folders; its [Codex provider](https://github.com/pingdotgg/t3code/blob/main/apps/server/src/provider/Layers/CodexProvider.ts)
+asks the Codex app server for the project's skill inventory. With a custom
+provider home or a remote server, install where that provider runs. Codex also
+scans parent folders up to the repository root. File presence in doctor proves
+the adapter was copied; verify the inventory and invocation in the host to
+confirm runtime discovery.
+
+### T3 actions
+
+Open in Studio and both export actions use `praxity action studio|export <course> [options]`.
+This runs Studio's `identity init <course>` for the same course before the
+target command. If initialization fails, including pending identity or a need
+for `--rederive`, the action stops. The actions never rederive identity
+automatically. These actions require a Rubato pack with the `action` command.
+If an older pack reports an expected-command error, run `praxity update`.
+Init keeps other keys and scripts, including customised commands, and refuses
+invalid JSON unchanged.
+
+Init hides `.praxity/`, `.praxity-write-*` recovery copies and
+`.praxity-transaction.json` through `.vscode/settings.json`. It preserves
+author settings, including explicit `false` values, and reports those
+overrides. Settings with comments or values that cannot be safely rewritten
+stay unchanged; init prints the entries to add. It records its additions in the
+private course registry and never changes Git ignore rules.
+
+Studio keeps a course port in 41700-41999, reserved in
+`~/.praxity/toolkit-state/t3-actions.json`. Rerunning init keeps that port and
+upgrades recognised actions written by earlier versions.
+`praxity doctor` warns when a course's `t3.json` actions differ from the
+current generator, and per project when T3's saved Praxity actions differ from
+that project's file. Optional settings and project JSON reads are limited to
+4 MiB each. It queries the project mapping from a private copy of
+`statev2.sqlite` and its committed WAL, with a 128 MiB limit per snapshot file.
+It never opens the live database with SQLite. Missing, unreadable, oversize or
+changing T3 files and mappings with a rollback journal are skipped.
+Generated actions use relative paths and a loopback `/launch` URL, with no tokens
+or machine paths. They call the launcher as `"$HOME/.praxity/bin/praxity"`,
+which the shell expands on each machine, because T3 runs actions in a login
+shell that may not have `~/.praxity/bin` on PATH. Open in Studio passes
+`--no-open`, so the editor opens in T3's preview and not in your default
+browser. Automatic editor preview needs T3 desktop and Studio's `--port` and
+`/launch` support.
+
+### Doctor output
+
+`schemas/doctor.schema.json` defines `praxity doctor --json` output, version 2,
+which added `partial`. Each item has an `id`, `status`, `message` and `fix`.
+Exit code 1 means at least one failure. Missing tools, unused adapters, partial
+adapters and a missing PATH entry do not fail it. Doctor checks the Node pin,
+reads Check's own JSON doctor, and has `host.claude` and `host.codex` items for
+both scopes. `launcher.path` reports whether the first `praxity` on PATH is the
+Rubato launcher. Probes time out after 30 seconds and cap captured output at
+1 MiB. Temporary probe documents are removed.
+
+Check currently exposes refusal in setup text rather than persistent doctor
+state. Rubato records Check's explicit refusal line from setup run through
+`praxity` in `~/.praxity/toolkit-state/declined.json`, outside pack folders.
+This per-user state survives updates, rollback and uninstall. It cannot see a refusal from Check run on its own.
+A component that works counts as ok, even if you refused it earlier.
 
 ### Publish a release
 
