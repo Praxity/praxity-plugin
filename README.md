@@ -1,13 +1,12 @@
 # Rubato
 
 Rubato installs Praxity's tools and skills for learning designers into agent hosts.
-On an Apple Silicon or Intel Mac, one install gives you five working tools:
+On an Apple Silicon or Intel Mac, one install gives you four working tools:
 
 - Studio edits a course in the browser or in T3's preview, and exports it as HTML or PDF.
 - Check audits an exported course, including for accessibility.
 - Trace writes a report on an exported HTML course.
 - Print renders Markdown to PDF.
-- Import converts a SCORM package into a Praxity course.
 
 The pack also installs private Node and Typst runtimes, a `praxity` command,
 T3 course actions and skills for T3, Claude Code and Codex CLI. There is no SDK
@@ -29,7 +28,7 @@ pack version is ahead of Rubato `v0.1.1`, whose published manifest and stable up
 channel remain unchanged.
 The installer supports Apple Silicon and Intel macOS and chooses native arm64
 runtimes when launched through Rosetta. Studio has an archive for each
-architecture. Check, Trace, Print and Import share portable archives across both.
+architecture. Check, Trace and Print share portable archives across both.
 Other unpublished platform entries in `pack.json` are placeholders.
 Before publishing, run `npm run validate:release`. It refuses unpublished tools
 on every platform in `platforms`; regular validation still permits staged packs.
@@ -121,7 +120,7 @@ T3 course actions call it by that path, so they work before you edit PATH.
 The doctor's `launcher.path` item says whether `praxity` is on PATH and names
 the line to add. Neither the installer nor the doctor edits shell files.
 The launcher selects the active pack and uses its private Node. It sets Print's
-`PRAXITY_PRINT_TYPST` and Import's `PRAXITY_CLI` to absolute pack paths. Studio's
+`PRAXITY_PRINT_TYPST` to an absolute pack path. Studio's
 present standalone publisher still needs a supported shared-Typst option.
 Node Studio launches receive a private IPC channel so Studio can detect launcher
 death during startup. Executable runners receive `PRAXITY_PARENT_PID` with the
@@ -143,15 +142,15 @@ integrity against that trusted manifest.
 ~/.praxity/bin/praxity check ...
 ~/.praxity/bin/praxity trace ...
 ~/.praxity/bin/praxity print ...
-~/.praxity/bin/praxity import ...
 ~/.praxity/bin/praxity studio . --no-open
 ```
 
 `setup [tool]` delegates to each installed tool's setup with its consent prompts.
 For example, `praxity setup check browser` forwards `setup browser` to Check.
-It never adds `--yes`. Every other subcommand and its arguments reach Studio
+It never adds `--yes`. Studio subcommands and their arguments reach Studio
 unchanged. Rubato reserves `setup`, `doctor`, `version`, `update`, `rollback`,
-`skills`, `init`, `check`, `trace`, `print` and `import`.
+`skills`, `init`, `check`, `trace` and `print`.
+`praxity import` exits with "Import isn't included in this release."
 
 ## Update
 
@@ -305,6 +304,8 @@ Updates retain the previous version. Both version pointers change in one atomic
 rename. Rollback checks the destination pack and keeps the outgoing pack, even
 when its contents are damaged. Save and close Studio before switching or removing
 a pack. Rollback and uninstall do not detect dirty editor sessions.
+After rollback, run `praxity skills refresh --scope user` and, in each course
+with project skills, `praxity skills refresh --scope project` to match that pack.
 
 ```sh
 ~/.praxity/bin/praxity rollback
@@ -445,9 +446,8 @@ tools, unused adapters, partial adapters and a missing PATH entry do not fail it
 
 Doctor checks the Node pin and compiles a tiny Typst document. It reads Check's
 own JSON doctor and inspects the bundled tiny Studio course. It runs Trace and
-Print on temporary inputs when installed, and has Import convert its shipped
-SCORM fixture. It checks the shared Claude and Codex skill folders at both
-scopes, with `host.claude` and `host.codex` items. An adapter missing some of
+Print on temporary inputs when installed. It checks the shared Claude and Codex
+skill folders at both scopes, with `host.claude` and `host.codex` items. An adapter missing some of
 this pack's skills, or holding changed copies, is `partial`; its message names
 those skills and its fix is the `praxity skills install` command that refreshes
 them. Install backs up edited copies before replacing recorded Rubato folders.
@@ -481,13 +481,13 @@ It contains regular files and directories only. The checksum list has one
 bootstrap, with no duplicate entries for either. Publish all assets together
 before marking the release latest; update refuses incomplete releases.
 
-The published `v0.1.1` release contains all five darwin-arm64 tool archives and
+The published `v0.1.1` release contains the earlier darwin-arm64 tool archives and
 Studio's darwin-x64 archive. The checked-in `pack.json` replaces its Check and
 Trace pins with commit-qualified portable CLI archives hosted on Rubato's
 asset-only experimental prereleases, recording each full source revision and
 archive SHA-256. These are byte-for-byte copies of the owning tools' prereleases.
 The asset-only release does not update the stable channel or publish a pack.
-Check, Trace, Print and Import reuse the same archives for Intel macOS.
+Check, Trace and Print reuse the same archives for Intel macOS.
 Print's asset name retains `darwin-arm64` for compatibility; its payload
 inventory declares it portable. Other platform entries stay
 `unpublished`, with the reason recorded beside each.
@@ -503,8 +503,8 @@ Typst 0.15.1 hashes came from [official release asset metadata](https://api.gith
 checksums. Neither origin settles signing, Gatekeeper or clean-Mac acceptance.
 
 Rubato's own scripts, skills and adapters are MIT-licensed (see `LICENSE`).
-The tools it installs keep their own licences: Studio, Check, Trace, Print and
-Import are under PolyForm Perimeter 1.0.1, with their third-party notices inside
+The tools it installs keep their own licences: Studio, Check, Trace and Print
+are under PolyForm Perimeter 1.0.1, with their third-party notices inside
 each archive. Installing or adapting a tool does not relicense it.
 
 ## Paste into your agent

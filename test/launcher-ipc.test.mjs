@@ -30,7 +30,7 @@ async function reservePort() {
 test('invocation does not mutate or inherit a parent identity, including synchronous Studio probes', t => {
   const { context } = fixture(t);
   context.env = { ...context.env, PRAXITY_PARENT_PID: '999999' };
-  for (const id of ['studio', 'check', 'trace', 'print', 'import']) {
+  for (const id of ['studio', 'check', 'trace', 'print']) {
     const tool = fakeTool(context, id);
     assert.equal(toolInvocation(context, tool, []).env.PRAXITY_PARENT_PID, undefined, id);
   }

@@ -23,6 +23,7 @@ export function installation(t, options = {}) {
   const home = options.homeName ? join(root, options.homeName) : originalHome;
   if (options.homeName) mkdirSync(home);
   const pack = examplePack();
+  if (options.legacyImport) pack.tools.push({ ...structuredClone(pack.tools.find(tool => tool.id === 'print')), id: 'import' });
   pack.platforms = ['darwin-arm64'];
   for (const artifact of [...Object.values(pack.runtimes), ...pack.tools]) {
     artifact.archives = { 'darwin-arm64': artifact.archives['darwin-arm64'] };
