@@ -1,6 +1,3 @@
-// Scores a composer outline's pattern choices against a fixture's expected envelope.
-// Usage: node score-selection.mjs <outline.md> <expected.md>
-// Prints one JSON line; exits 1 when a hard check fails.
 import { readFileSync } from 'node:fs';
 
 const lastJsonBlock = (path) => {

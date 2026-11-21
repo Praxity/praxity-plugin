@@ -16,8 +16,6 @@ const validAction = action => record(action) && typeof action.name === 'string' 
   (action.previewUrl === undefined || typeof action.previewUrl === 'string');
 
 function optionalJson(file) {
-  // T3 is optional. Missing, unreadable or malformed host files are not a
-  // toolkit failure, and none of these diagnostics repair host storage.
   let fd;
   try {
     fd = openSync(file, 'r');
@@ -65,10 +63,7 @@ function projectFolders(directory) {
     const copy = join(snapshot, 'statev2.sqlite');
     copyFileSync(source, copy);
     if (before[1]) copyFileSync(`${source}-wal`, `${copy}-wal`);
-    // No live SQLite connection or locks. Reject observed writes, replacements,
-    // WAL resets and journal changes during the copy instead of mixing versions.
     if (files.some((file, index) => fileVersion(file) !== before[index])) return [];
-    // SQLite rebuilds its private WAL index and reads committed frames only.
     db = new DatabaseSync(copy, { readOnly: true });
     if (Object.values(db.prepare('PRAGMA quick_check').get())[0] !== 'ok') return [];
     return db.prepare('SELECT project_id AS id, title, workspace_root AS folder FROM projection_projects WHERE deleted_at IS NULL').all();
@@ -77,8 +72,6 @@ function projectFolders(directory) {
 }
 
 function actionFields(action) {
-  // T3 adds an ID and materializes defaults when importing. Compare the
-  // imported fields, not those storage differences or JSON property order.
   return [action.name.trim(), action.command.trim(), action.icon ?? 'play',
     action.runOnWorktreeCreate ?? false,
     action.runOnWorktreeCreate ? (action.async ?? true) : true,

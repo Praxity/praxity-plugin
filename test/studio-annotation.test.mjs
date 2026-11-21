@@ -7,7 +7,6 @@ import { spawnSync } from 'node:child_process';
 import { fixture, repository } from './helpers.mjs';
 import { resolveAnnotationSelector } from '../skills/studio-editor/scripts/resolve-annotation.mjs';
 
-// The browser document is the seam. Selector parsing belongs to the browser.
 function element(attributes = {}, text = '', parent = null) {
   return {
     innerText: text,
@@ -33,7 +32,6 @@ function probe(selector, selected, markers, pageUrl = 'http://localhost:41700/le
       return selected;
     },
   };
-  // Run the same self-contained function expression the preview receives.
   const expression = `(${resolveAnnotationSelector.toString()})(${JSON.stringify(selector)})`;
   const context = { document, compromised: false };
   const result = runInNewContext(expression, context);
@@ -267,7 +265,6 @@ test('annotation CLI examples bind rendered field, JSON text and whole-file revi
   assert.ok(commands[0].includes('--dry-run'));
   assert.equal(commands[1].includes('--dry-run'), false);
   assert.match(skill, /For annotation and comment edits, forbid `--find`, `--page`, `--block` and `--line`/);
-  // Check all prose too, so an added positional-address exception cannot pass.
   for (const flag of ['--find', '--page', '--block', '--line']) {
     assert.equal(skill.match(new RegExp(`${flag}\\b`, 'g'))?.length, 1, `${flag} belongs only in the prohibition`);
   }
@@ -285,7 +282,6 @@ test('CLI annotation contract uses admitted text fields for every kind and refus
   assert.ok(skill.includes('accept repeats only when the binding and Studio\'s renderer structure account for all of them'));
   assert.ok(skill.includes('Unknown repeats refuse.'));
   assert.ok(skill.includes('Require the replaced source text to contain the picked live quote, allowing only inline markup differences. A mismatch refuses.'));
-  // The CLI is the only edit path: no packaged client keeps the bearer out of the agent's hands.
   for (const retired of ['canvasTextSnapshot', 'canvasTextApply', 'bearer', 'next-run.json', 'Minimum Studio CLI build']) {
     assert.equal(skill.includes(retired), false, retired);
   }
@@ -296,8 +292,6 @@ test('CLI annotation contract uses admitted text fields for every kind and refus
 
 const section = (skill, heading) => skill.split(`\n${heading}\n`)[1]?.split(/\n#{2,3} /)[0] ?? '';
 
-// Single-node operations Studio's CLI admits for one existing block (Studio
-// reference/operations.md; edit-cli.ts passes --expect-revision to every one).
 const guardedOperations = ['deleteBlocks', 'moveBlocks', 'setProperty', 'turnInto', 'removeItem', 'moveItem'];
 
 function assertStructuralGuards(skill) {
@@ -308,7 +302,6 @@ function assertStructuralGuards(skill) {
   assert.equal(commands.length, 2, 'dry run, then guarded write');
   assert.ok(commands[0].includes('--dry-run') && !commands[1].includes('--dry-run'));
   for (const command of commands) assert.ok(command.includes('--at <nodeId> --expect-revision <fileRevision>'), command);
-  // Hand edits are the fallback, in one paragraph after the commands, gated on a fresh revision.
   const paragraphs = structural.split(/\n\s*\n/);
   const manual = paragraphs.filter(paragraph => /by hand|startLine/.test(paragraph) && !paragraph.includes('`blocks[]` entry whose `nodeId`'));
   assert.equal(manual.length, 1, 'hand editing appears in exactly one paragraph');
@@ -331,7 +324,6 @@ test('structural requests use guarded commands, and hand edits are only the revi
 test('annotations route by request before any text-field admission', () => {
   const skill = readFileSync(join(repository, 'skills/studio-editor/SKILL.md'), 'utf8');
   const steps = section(skill, '## Act on an annotation');
-  // A whole image or note has no text field; requiring one before routing refuses valid structural targets.
   assert.equal(steps.includes('textFields'), false);
   assert.match(steps, /4\. Route by the request\. A wording change goes through the \[guarded text edit\]\(#guarded-text-edit\)\. Deleting, moving or restyling a block, or changing one of its settings, goes through the \[structural change\]\(#structural-change\)\./);
   assert.match(steps, /3\. Find the lesson file\. The annotated page's path ends in `<slug>\.html`\./);

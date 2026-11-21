@@ -46,7 +46,6 @@ function runner(context, check = checkResult) {
 }
 test('doctor aggregates ok, failed, declined and not-installed through its interface', t => {
   const context = prepared(t);
-  // Java is usable, so its past refusal no longer applies.
   writeFileSync(join(context.home, '.praxity/toolkit-state/declined.json'), '{"check":["browser","java"]}');
   const result = doctor(context, runner(context));
   assert.deepEqual(validateSchema(result, loadSchema('doctor')), []);
@@ -122,7 +121,6 @@ test('doctor names the PATH line when the Rubato launcher is not first on PATH, 
   assert.equal(missing.fix, 'Add this line at the end of your shell startup file (~/.zshrc for zsh, ~/.bash_profile for bash), then open a new terminal and restart T3: export PATH="$HOME/.praxity/bin:$PATH"');
   writeFileSync(join(bin, 'praxity'), '#!/bin/sh\n', { mode: 0o755 });
   assert.equal(path(context.root, bin).status, 'ok');
-  // A relative entry depends on the current folder, so it never counts.
   assert.equal(path(relative(context.home, bin)).status, 'not-installed');
   writeFileSync(join(other, 'praxity'), '#!/bin/sh\n', { mode: 0o755 });
   const shadowed = path(other, bin);
@@ -131,7 +129,6 @@ test('doctor names the PATH line when the Rubato launcher is not first on PATH, 
   assert.equal(path(bin, other).status, 'ok');
 });
 
-// Windows has no execute bit.
 test('doctor skips a praxity on PATH that is not executable', { skip: process.platform === 'win32' && 'POSIX modes only' }, t => {
   const context = prepared(t);
   const bin = join(context.home, '.praxity/bin'), other = join(context.root, 'other bin');

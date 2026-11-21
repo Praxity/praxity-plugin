@@ -23,11 +23,9 @@ function verifyStudioArchive(file, arch, studioSha, expectedDigest, studio) {
   requireValue(digest === expectedDigest, 'Build archive digest mismatch');
   requireValue(readFileSync(`${file}.sha256`, 'utf8').trim() === `${digest} *${name}` ||
     readFileSync(`${file}.sha256`, 'utf8').trim() === `${digest}  ${name}`, 'Archive checksum mismatch');
-  // Reuse the installer's archive parser before asking tar to read any member.
   const members = archiveInventory(file, 1);
   const files = members.filter(member => member.type !== 'D');
   requireValue(files.every(member => member.type === 'P'), 'Archive links refused');
-  // Candidate archives have one fixed root. Reject alternate roots and aliases.
   const rawNames = tar(['-tf', file]).toString().trim().split(/\r?\n/);
   requireValue(rawNames.every(name => name === 'studio-cli/' || name.startsWith('studio-cli/')), 'Unexpected archive root');
   const inventory = JSON.parse(tar(['-xOf', file, 'studio-cli/inventory.json']));
@@ -40,7 +38,6 @@ function verifyStudioArchive(file, arch, studioSha, expectedDigest, studio) {
   requireValue(expected.size === inventory.files.length, 'Duplicate inventory member');
   requireValue(files.length === expected.size + 1, 'Inventory does not cover archive');
   for (const member of files) {
-    // The build inventory owns chunk names. Limit it to public payload families.
     requireValue((member.name === 'inventory.json' || expected.has(member.name)) &&
       /^(?:[^/]+\.mjs|package\.json|inventory\.json|(?:editor|export-assets|typst|node_modules|licenses|legal|prax-format)\/.+)$/.test(member.name) &&
       !member.name.endsWith('.map') && !member.name.split('/').includes('.git') &&
@@ -48,7 +45,6 @@ function verifyStudioArchive(file, arch, studioSha, expectedDigest, studio) {
     if (member.name === 'inventory.json') continue;
     requireValue(expected.get(member.name) === member.hash, 'Payload hash mismatch');
   }
-  // Thin canvas replaced the HTML shell. A partial canvas cannot fall back to it.
   const browser = ['editor/canvas.js', 'editor/canvas.sha256'];
   const required = [studio.entry, studio.notices, 'package.json', 'typst/typst', 'legal/LICENSE', 'legal/LICENSING.md',
     ...(browser.some(name => expected.has(name)) ? browser : ['editor/index.html'])];
@@ -64,8 +60,6 @@ function verifyStudioArchive(file, arch, studioSha, expectedDigest, studio) {
     requireValue(/^[a-f0-9]{64}$/.test(canvasDigest), 'Invalid canvas digest');
     requireValue(canvasDigest === expected.get('editor/canvas.js'), 'Canvas digest mismatch');
   }
-  // Upstream paths are allowed only in these vendored families, with third-party
-  // provenance in the verified inventory. Scan all Praxity payload and inventory.
   const upstream = /^(?:typst|node_modules|licenses)\/|^export-assets\/image-codecs\//;
   const scanned = ['inventory.json', ...inventory.files
     .filter(entry => !(entry.component === 'third-party' && upstream.test(entry.path)))
@@ -105,7 +99,6 @@ export async function publishStudioPack({ version, studioSha, archivesDir, outpu
   pack.version = version;
   studio.version = `${studioVersion.split('-')[0]}-main.${studioSha.slice(0, 8)}`;
   studio.sourceRevision = studioSha;
-  // Keep historical releases untouched; new manifests use the current repository.
   for (const tool of pack.tools) for (const archive of Object.values(tool.archives)) {
     if (archive.status === 'published') archive.url = archive.url.replace('https://github.com/Praxity/praxity-toolkit/', 'https://github.com/Praxity/rubato/');
   }
@@ -117,11 +110,9 @@ export async function publishStudioPack({ version, studioSha, archivesDir, outpu
   const staging = join(outputDir, 'bootstrap');
   mkdirSync(staging, { mode: 0o700 });
   try {
-    // Only the public install payload is exported. Never archive a working tree.
     const archive = execFileSync('git', ['archive', '--format=tar', '--prefix=rubato/', 'HEAD',
       'install.sh', 'LICENSE', 'package.json', 'src', 'scripts', 'schemas', 'skills', 'fixtures'],
     { cwd: repositoryRoot, maxBuffer: 32 * 1024 * 1024 });
-    // File input lets tar stop at archive EOF without closing a producer's pipe.
     const archiveFile = join(staging, 'bootstrap.tar');
     writeFileSync(archiveFile, archive, { flag: 'wx', mode: 0o600 });
     tar(['-xf', archiveFile, '-C', staging]);
@@ -167,13 +158,11 @@ export function githubRelease(repositoryRoot, execute = execFileSync) {
   return {
     async assertNewImmutableRelease(tag) {
       requireValue(api('immutable-releases').enabled === true, 'Enable Rubato release immutability first');
-      // A complete paginated list distinguishes absence from authentication or network failure.
       const releases = JSON.parse(gh(['api', '--paginate', '--slurp', `repos/${repository}/releases?per_page=100`]));
       requireValue(!releases.flat().some(item => item.tag_name === tag), 'Release already exists');
       for (const item of releases.flat().filter(item => !item.draft && /^v\d+\.\d+\.\d+$/.test(item.tag_name))) {
         requireValue(newer(tag.slice(1), item.tag_name.slice(1)), 'Pack version must be greater than every published stable release');
       }
-      // Rubato already has a stable release. A failed Latest read must refuse.
       assertLatest(tag.slice(1));
       const tags = JSON.parse(gh(['api', '--paginate', '--slurp', `repos/${repository}/tags?per_page=100`]));
       requireValue(!tags.flat().some(item => item.name === tag), 'Tag already exists');

@@ -62,12 +62,10 @@ function candidate(t, mutate = () => {}, mutateInventory = () => {}, mutateStage
   studio.sourceRevision = sha;
   for (const arch of ['arm64', 'x64']) studio.archives[`darwin-${arch}`].sha256 = options.expectedDigests[arch];
   writeFileSync(join(root, 'pack.json'), JSON.stringify(pinned));
-  // Share only Git's read interface so the bootstrap still archives the real HEAD.
   writeFileSync(join(root, '.git'), `gitdir: ${execFileSync('git', ['rev-parse', '--absolute-git-dir'], { cwd: repository, encoding: 'utf8' }).trim()}\n`);
   return { root, calls, release, options };
 }
 
-// Replace only the external process seam; verification and extraction still use real tar.
 function bootstrapArchive(t, f, kind = 'padded') {
   const execute = execFileSync;
   const extracted = [];
@@ -78,7 +76,6 @@ function bootstrapArchive(t, f, kind = 'padded') {
         Buffer.concat([bytes, Buffer.alloc(16 * 1024 * 1024)]);
     }
     if (command === 'tar' && args[0] === '-xf') {
-      // Model an extractor that will not consume stdin; main fails here deterministically.
       assert.notEqual(args[1], '-', 'bootstrap extraction must use a file');
       assert.equal(options?.input, undefined);
       assert.equal(readFileSync(args[1]).length > 0, true);
@@ -203,7 +200,6 @@ for (const [name, sidecar, message] of [
   for (const invalidArch of ['arm64', 'x64']) test(`thin canvas ${name} on ${invalidArch} refuses before publication`, async t => {
     const { options, calls, release } = candidate(t, payload => {
       thinCanvas(payload);
-      // candidate() hashes the changed sidecar into a consistent inventory.
       if (payload.arch === invalidArch) payload.files['editor/canvas.sha256'] = sidecar;
     });
     await assert.rejects(publishStudioPack({ ...options, dryRun: false }, release), { message });
@@ -434,7 +430,6 @@ test('invalid generated release manifest refuses at validation guard', async t =
   const pack = JSON.parse(readFileSync(join(f.options.repositoryRoot, 'pack.json')));
   pack.tools.find(tool => tool.id === 'print').archives['darwin-arm64'] = { status: 'unpublished', reason: 'Not released.' };
   writeFileSync(join(copy, 'pack.json'), JSON.stringify(pack));
-  // Keep export usable if validation is removed, so a later Git error cannot mask it.
   const gitDirectory = execFileSync('git', ['rev-parse', '--absolute-git-dir'], { cwd: repository, encoding: 'utf8' }).trim();
   writeFileSync(join(copy, '.git'), `gitdir: ${gitDirectory}\n`);
   await assert.rejects(publishStudioPack({ ...f.options, repositoryRoot: copy }, f.release), /Invalid release manifest/);

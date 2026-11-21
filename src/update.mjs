@@ -7,7 +7,6 @@ import { loadSchema, validateSchema } from './schema.mjs';
 import { findSkillsProject } from './skills.mjs';
 import { probeProcess } from './tools.mjs';
 
-// This channel is part of the reviewed bootstrap, never a CLI or environment override.
 const officialReleaseChannel = Object.freeze({
   metadata: 'https://api.github.com/repos/Praxity/rubato/releases/latest',
   downloads: 'https://github.com/Praxity/rubato/releases/download/',
@@ -23,7 +22,6 @@ export function assertStudioClosed(context, run = probeProcess) {
     const command = line.replaceAll('\\', '/');
     return command.includes(root) && (command.includes('/tools/studio/') || command.includes('/bin/praxity-studio') || /\/src\/cli\.mjs["']?\s+studio(?:\s|$)/.test(command));
   });
-  // Studio cannot certify that a browser textarea is saved. Refuse instead of signalling it.
   if (busy) throw new Error(`Studio may hold unsaved text. ${closeInstruction}`);
 }
 
@@ -75,7 +73,6 @@ export async function updatePack(context, dependencies = {}) {
     const bootstrapName = `rubato-${pack.version}.tar.gz`;
     const bootstrapFile = join(scratch, bootstrapName);
     writeFileSync(bootstrapFile, await verified(bootstrapName));
-    // Reuse the installer's archive owner; bootstrap code must contain only regular files/directories.
     const inventory = archiveInventory(bootstrapFile, 1, { allowHardlinks: false });
     if (inventory.some(entry => !['P', 'D'].includes(entry.type))) throw new Error('Unsafe release bootstrap link');
     const bootstrap = join(scratch, 'bootstrap'); mkdirSync(bootstrap);
@@ -86,17 +83,13 @@ export async function updatePack(context, dependencies = {}) {
   } finally { rmSync(scratch, { recursive: true }); }
 }
 
-// The caller authenticates the bootstrap and manifest before invoking this owner.
-// Local reviewed checkouts and the official updater share activation and skills.
 export function installVerifiedPack(context, { bootstrap, manifest }, dependencies = {}) {
     const run = dependencies.updateProcess ?? probeProcess, print = dependencies.print ?? console.log;
     const pack = JSON.parse(manifest);
-    // The verified release owns its manifest schema; the installed pack may be older.
     const errors = validateSchema(pack, JSON.parse(readFileSync(join(bootstrap, 'schemas/pack.schema.json'), 'utf8')));
     if (errors.length) throw new Error(`Invalid pack manifest:\n${errors.join('\n')}`);
     if (digest(readFileSync(join(bootstrap, 'pack.json'))) !== digest(manifest)) throw new Error('Bootstrap manifest SHA-256 mismatch');
     assertStudioClosed(context, run);
-    // No timeout: rerunning the installer repairs an interrupted install.
     const installed = run({ command: 'sh', args: [join(bootstrap, 'install.sh'), '--manifest-sha256', digest(manifest), '--platform', context.state.platform], env: context.env }, { stdio: 'inherit', timeout: undefined });
     if (installed.error || installed.code === null || installed.signal) throw new Error(`Release installer interrupted. Rerun the install command to recover. ${installed.error ?? installed.signal ?? ''} ${installed.stderr ?? ''}`);
     const activeFile = join(context.home, '.praxity/toolkit/active');
@@ -107,7 +100,6 @@ export function installVerifiedPack(context, { bootstrap, manifest }, dependenci
     return code;
 }
 
-// Both callers use the same project discovery and actionable refusal diagnostics.
 export function refreshInstalledSkills(context, dependencies = {}, includeUser = false) {
   const run = dependencies.updateProcess ?? probeProcess, print = dependencies.print ?? console.log;
   const project = findSkillsProject(context.cwd, context.home);

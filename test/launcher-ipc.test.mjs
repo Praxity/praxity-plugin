@@ -73,7 +73,6 @@ writeFileSync(process.env.TEST_IDENTITY, JSON.stringify({ connected: process.con
 
 for (const immediate of [true, false]) test(`IPC closes Studio cleanly when its launcher dies ${immediate ? 'immediately after spawn' : 'after readiness'}`, posixOnly, async t => {
   let launcher, studioPid, exitedFile, studioExited = false;
-  // Close processes before the fixture removes the exit marker and course.
   t.after(() => {
     if (launcher && launcher.exitCode === null && launcher.signalCode === null) launcher.kill('SIGKILL');
     if (studioPid > 0 && !studioExited && !existsSync(exitedFile)) {
@@ -137,8 +136,6 @@ Server.prototype.close = function(...args) {
 syncBuiltinESMExports();
 }
 `);
-  // Observe the real OS spawn, then kill the launcher before the gated bootstrap.
-  // No toolkit function, child option or Studio close implementation is replaced.
   writeFileSync(driver, `
 import childProcess from 'node:child_process';
 import { renameSync, writeFileSync } from 'node:fs';

@@ -25,14 +25,11 @@ function assertExportProcedure(text, name) {
   return exports;
 }
 
-// The prax-format skill owns the identity rule, including when rederivation is allowed.
-// Rubato skills run init before each Studio or export command and point to that rule.
 const identityRule = "follow the prax-format skill's identity rule";
 const readStudioWorkflow = () => readFileSync(join(repository, 'skills/studio-editor/SKILL.md'), 'utf8') + '\n' + readFileSync(join(repository, 'skills/studio-editor/references/review-cli.md'), 'utf8');
 const studioStopRule = "If init reports anything other than `ok: true`, stop: don't open Studio, and follow the prax-format skill's identity rule.";
 
 function praxityCommands(code) {
-  // Match the launcher suffix so paths, variables, npx and shell chains share a detector.
   return [...code.matchAll(/(?<![\w.-])praxity["']?\s+(identity\s+init|studio|export)\b([^\r\n;&|]*)/g)].map(([, operation, tail]) => ({
     operation: operation.replace(/\s+/g, ' '),
     args: tail.match(/"[^"]*"|'[^']*'|<[^>]*>|[^\s]+/g) ?? [],
@@ -47,7 +44,6 @@ function assertCommandProcedures(text, name) {
     previousEnd = snippet.index + snippet[0].length;
     const { block, inline } = snippet.groups;
     const code = block ?? inline;
-    // Prose spans may use an earlier instruction in their section; blocks and chains stand alone.
     const initialized = block !== undefined || /&&|;|\n/.test(code) ? new Set() : sectionInitialized;
     for (const { operation, args } of praxityCommands(code)) {
       if (operation === 'studio' && args.length === 1 && args[0] === '--help') continue;
@@ -94,7 +90,6 @@ test('every Studio and export command initializes the same course first, with pi
   const totals = { studio: 0, export: 0 };
   for (const [name, bytes] of outputs.codex) {
     if (!name.endsWith('.md')) continue;
-    // Resolve the lifecycle's identity pointer before checking all three launch examples.
     if (name.endsWith('/studio-editor/references/review-cli.md')) continue;
     const document = name.endsWith('/studio-editor/SKILL.md') ? readStudioWorkflow() : bytes.toString();
     const counts = assertCommandProcedures(document, name);
@@ -146,7 +141,6 @@ test('review launch takes its port from the reserved Studio action in every adap
     assertReservedReviewPort(section);
     assertReviewLaunch(section);
     assert.equal(assertCommandProcedures(skill, host).studio, 3);
-    // Both reservation branches must independently initialize the course.
     for (const launch of ['--review --port N --no-open', '--review --no-open']) {
       const commands = `~/.praxity/bin/praxity identity init .\n~/.praxity/bin/praxity studio . ${launch}`;
       assert.throws(() => assertCommandProcedures(skill.replace(commands, commands.split('\n')[1]), host), /initialize the same course/);
@@ -173,7 +167,6 @@ test('documented reserved-port forms round trip generated actions and the init m
   for (const launcher of ['praxity', '"$HOME/.praxity/bin/praxity"']) {
     const command = action.command.replace('"$HOME/.praxity/bin/praxity"', launcher);
     assert.equal(Number(command.match(/ --port (\d+)(?: --no-open)?$/)[1]), 4311);
-    // Exercise studioCommand through init's public interface, using a port in its reservation range.
     const { context } = fixture(t);
     writeFileSync(join(context.cwd, 'course.yaml'), 'title: A course\n');
     writeFileSync(join(context.cwd, 't3.json'), JSON.stringify({ scripts: [{ name: action.name, command: command.replace('4311', '41811') }] }));
@@ -316,11 +309,9 @@ function brokenLinks(files) {
   const broken = [];
   for (const [name, bytes] of files) {
     if (!name.endsWith('.md')) continue;
-    // Fenced and inline code hold placeholders, not links an agent follows.
     const prose = bytes.toString().replace(/^(`{3,}|~{3,})[^\n]*\n[\s\S]*?^\1[^\n]*$/gm, '').replace(/(`+)[\s\S]*?\1/g, '');
     for (const [, href] of prose.matchAll(/\]\(([^\s)]+)\)/g)) {
       if (/^(?:[a-z][\w+.-]*:|#)/i.test(href)) continue;
-      // Each skill is installed and loaded on its own, so a link must stay in its own folder.
       const root = `${name.split('/').slice(0, 3).join('/')}/`;
       const target = posix.normalize(posix.join(posix.dirname(name), href.split('#')[0]));
       if (!target.startsWith(root) || !files.has(target)) broken.push(`${name} -> ${href}`);
@@ -331,7 +322,6 @@ function brokenLinks(files) {
 
 test('every relative link in an installed skill resolves inside the adapter (T12)', t => {
   const { context } = fixture(t);
-  // Studio ships SKILL.md at the root of prax-format/, with its references beside it.
   const studio = join(context.root, 'tools/studio/prax-format');
   mkdirSync(join(studio, 'skill'), { recursive: true }); mkdirSync(join(studio, 'reference'));
   writeFileSync(join(studio, 'SKILL.md'), '---\nname: prax-format\ndescription: Write a course.\n---\nRead [blocks](reference/blocks.md) and [choices](skill/assessments.md).\n');
@@ -340,11 +330,9 @@ test('every relative link in an installed skill resolves inside the adapter (T12
   const outputs = buildAdapters({ source: join(repository, 'skills'), tools: [studio] });
   for (const host of ['claude', 'codex']) assert.deepEqual(brokenLinks(outputs[host]), [], host);
   assert.ok(outputs.claude.has('.claude/skills/prax-format/reference/blocks.md'));
-  // A skill that links out of its own folder fails the same check.
   writeFileSync(join(studio, 'SKILL.md'), '---\nname: prax-format\ndescription: Write a course.\n---\nRead [blocks](../reference/blocks.md).\n');
   const outside = buildAdapters({ source: join(repository, 'skills'), tools: [studio] });
   assert.deepEqual(brokenLinks(outside.codex), ['.agents/skills/prax-format/SKILL.md -> ../reference/blocks.md']);
-  // So does a link into another installed skill, although its target exists.
   writeFileSync(join(studio, 'SKILL.md'), '---\nname: prax-format\ndescription: Write a course.\n---\nSee [the editor](../studio-editor/SKILL.md).\n');
   const sibling = buildAdapters({ source: join(repository, 'skills'), tools: [studio] });
   assert.ok(sibling.codex.has('.agents/skills/studio-editor/SKILL.md'));
@@ -488,7 +476,6 @@ test('doctor names skills missing after an upgrade, and refresh adds them withou
   await runCli(['skills', 'install', '--host', 'claude', '--scope', 'user'], context, quiet);
   const userSkill = join(context.home, '.claude/skills/my-notes/SKILL.md');
   mkdirSync(join(userSkill, '..')); writeFileSync(userSkill, 'USER SKILL');
-  // The upgraded pack adds Import and its skill.
   fakeTool(context, 'import');
   mkdirSync(join(context.root, 'tools/import/skill'));
   writeFileSync(join(context.root, 'tools/import/skill/SKILL.md'), '---\nname: praxity-import\ndescription: Convert a course.\n---\nImport skill.\n');

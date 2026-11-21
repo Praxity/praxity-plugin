@@ -8,7 +8,6 @@ import { runCli } from '../src/cli.mjs';
 import { loadSchema, validateSchema } from '../src/schema.mjs';
 import { fixture } from './helpers.mjs';
 
-// Literal expectations come from the init contract, independently of the writer.
 const exclusions = { '**/.praxity-write-*': true, '**/.praxity-transaction.json': true, '**/.praxity': true };
 const expected = { 'files.exclude': exclusions, 'search.exclude': exclusions };
 const read = file => readFileSync(file, 'utf8');
@@ -27,7 +26,6 @@ function setup(t, bytes) {
 }
 
 function interruptedInit(context, mode) {
-  // Interrupt the real filesystem adapter at its durable rename boundary.
   const script = `
     import fs from 'node:fs';
     import { syncBuiltinESMExports } from 'node:module';

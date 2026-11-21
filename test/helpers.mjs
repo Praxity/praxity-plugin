@@ -7,7 +7,6 @@ export const repository = fileURLToPath(new URL('..', import.meta.url));
 export const realPack = () => JSON.parse(readFileSync(join(repository, 'pack.json'), 'utf8'));
 export function examplePack() {
   const pack = realPack();
-  // Tests pin their own version and choose which tools to publish, independently of the release.
   pack.version = '0.1.0';
   for (const tool of pack.tools) {
     for (const platform of Object.keys(tool.archives)) {
@@ -17,7 +16,6 @@ export function examplePack() {
   return pack;
 }
 export function fixture(t) {
-  // Modules canonicalize their base, so tests compare canonical paths (macOS /var is /private/var).
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'praxity toolkit ')));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const home = join(root, 'home');

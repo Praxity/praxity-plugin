@@ -51,16 +51,12 @@ export function doctor(context, run = probeProcess) {
         } catch (error) { items.push(item(`tool.${tool.id}`, 'failed', error.message, `praxity setup ${tool.id}`)); continue; }
         for (const component of owned.components) {
           const fix = `praxity setup ${tool.id} ${component.id}`;
-          // An unusable system copy (macOS's /usr/bin/java stub, an old Java) is not the pack's to
-          // repair: setup installs a managed one that takes precedence, so it counts as missing.
           const missing = component.source === null && component.inventory === 'absent'
             || component.source === 'system' && component.inventory !== 'damaged';
           const status = component.usable ? 'ok'
             : component.inventory === 'damaged' ? 'failed'
             : missing && declined[tool.id]?.includes(component.id) ? 'declined'
             : missing ? 'not-installed' : 'failed';
-          // Without its browser Check audits no HTML at all, and praxity check
-          // exits 2. Its setup selector html installs the browser.
           if (component.id === 'browser' && status === 'not-installed') {
             items.push(item(`tool.${tool.id}.${component.id}`, status, 'Browser not installed, so praxity check cannot audit HTML and exits 2. Setup downloads it after asking.', `praxity setup ${tool.id} html`));
             continue;
@@ -83,7 +79,6 @@ export function doctor(context, run = probeProcess) {
           expected = join(work, 'print.pdf');
           args = ['render', input, '--output', expected];
         } else if (tool.id === 'import') {
-          // Import ships a tiny synthetic SCORM package for exactly this probe.
           const output = join(work, 'import');
           expected = join(output, 'course.yaml');
           args = [join(context.root, 'tools/import/fixtures/smoke/scorm'), '--output', output];
@@ -121,10 +116,6 @@ export function doctor(context, run = probeProcess) {
       else if (!stale.length && !missing.length) items.push(item(`host.${host}.${scope}`, 'ok', `Skill files current in ${adapters[host].skills}; verify invocation in the host`));
       else items.push(item(`host.${host}.${scope}`, !current.length && !stale.length ? 'not-installed' : 'partial', [missing.length && `Missing skills: ${missing.join(', ')}.`, stale.length && `Changed or out-of-date skills: ${stale.join(', ')}.`].filter(Boolean).join(' '), install));
     }
-    // T3 actions call the launcher by its full path, so a missing PATH entry
-    // only affects typed commands. The doctor names the line; it never edits it.
-    // A shell runs the first executable praxity on PATH. Relative entries
-    // depend on the current folder, so they never count.
     const executable = file => { try { accessSync(file, constants.X_OK); return statSync(file).isFile(); } catch { return false; } };
     const found = (context.env.PATH ?? '').split(delimiter).filter(directory => isAbsolute(directory)).map(directory => join(directory, 'praxity')).find(executable);
     const launcher = join(context.home, '.praxity/bin/praxity');

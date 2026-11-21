@@ -42,12 +42,6 @@ test('real pack validates and every published archive has a complete contract', 
   }
 });
 
-// Trace revisions whose item-cues carry what the assessment-writing gate reads: `<bundle>-review/operator.json`
-// (Praxity/praxity-trace#22), `status: "scored"` masked results from Studio language provenance (#23), and per-row
-// `excludedByReason`, `maskedExcludedCount` and coded `excluded` records (#24). An older pin can't reach a verdict:
-// 09fcaaf has no masked probe, 92a164d holds every result, and 97e6de3 makes every gate return "tooling".
-// Add a revision here only after checking its payload.
-// 9036868 retains that contract with item-cues/14 and masked-only preparation by default (#25).
 const maskedTraceRevisions = new Set(['9036868d4ba3f55aced52077b5b548eb1374ac72']);
 const pinsMaskedTrace = pack => maskedTraceRevisions.has(pack.tools.find(tool => tool.id === 'trace')?.sourceRevision);
 
@@ -96,7 +90,6 @@ test('release validation refuses unpublished tool placeholders on a supported pl
     tool.archives[platform] = { ...pack.runtimes.node.archives[platform] };
   }
   assert.deepEqual(validateReleaseManifest(pack), []);
-  // Unpublished platforms outside the release remain allowed.
   delete pack.tools[0].archives['darwin-x64'];
   pack.platforms.push('darwin-x64');
   assert.ok(validateReleaseManifest(pack).length);

@@ -15,7 +15,6 @@ test('an upgrade refreshes installed host skills and leaves user skills and othe
   const skills = join(setup.home, '.claude/skills'), userSkill = join(skills, 'my-notes/SKILL.md');
   mkdirSync(dirname(userSkill)); writeFileSync(userSkill, 'USER SKILL');
   assert.equal(existsSync(join(skills, 'fixture-import')), false);
-  // The next pack adds Import, whose archive ships a skill.
   const tool = setup.pack.tools.find(tool => tool.id === 'import'), payload = join(setup.root, 'fake import');
   for (const [file, bytes] of [[tool.entry, 'console.log("import");\n'], [tool.notices, 'Tool legal fixture\n'],
     [join(tool.skillPath, 'SKILL.md'), '---\nname: fixture-import\ndescription: Convert a course.\n---\nTool-owned skill.\n']]) {

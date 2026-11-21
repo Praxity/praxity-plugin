@@ -25,7 +25,6 @@ for (const change of ['edited', 'added', 'deleted', 'unchanged', 'legacy']) {
       rmSync(join(context.home, '.praxity/toolkit-skills-digests.json'));
     }
     outputs.claude.set('.claude/skills/example/SKILL.md', Buffer.from('New packaged skill'));
-    // Exercise both entry points; compare against the recorded install, not the new pack.
     if (change === 'edited') installSkills({ ...options, host: 'claude' });
     else refreshSkills(options);
     assert.equal(readFileSync(join(folder, 'SKILL.md'), 'utf8'), 'New packaged skill');
@@ -143,7 +142,6 @@ test('ownership written by the new pack is readable by the previous pack', async
     outputs: { claude: new Map([['.claude/skills/example/SKILL.md', Buffer.from('Packaged')]]) } };
   installSkills(options);
   refreshSkills(options);
-  // Exact module, validator and schema snapshots from the rollback-supported pack.
   const previous = join(context.root, 'previous-pack');
   cpSync(join(repository, 'test/fixtures/skills-rollback-065d777'), previous, { recursive: true });
   const { validateSchema } = await import(pathToFileURL(join(previous, 'src/schema.mjs')));
@@ -176,7 +174,6 @@ test('an interrupted install cannot reuse the previous baseline for a new save',
   syncBuiltinESMExports();
   try { assert.throws(() => installSkills(options), { code: 'ENOSPC' }); }
   finally { fs.writeFileSync = write; syncBuiltinESMExports(); }
-  // A save may restore the previous pack's bytes while the new install is interrupted.
   refreshSkills(options);
   const backup = messages.find(text => text.startsWith('Backed up example to '));
   assert.ok(backup);

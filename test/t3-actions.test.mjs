@@ -243,8 +243,6 @@ for (const open of [false, true]) {
         const updated = directoryBytes(directory);
         assert.match(t3Items(report(context))[0].message, /Next committed WAL title/);
         assert.deepEqual(directoryBytes(directory), updated);
-        // Windows locks SHM bytes during a write transaction. The committed
-        // open-connection cases above compare every file on all platforms.
         if (process.platform !== 'win32') {
           const pending = once(writer, 'message');
           writer.send('uncommitted');
@@ -369,7 +367,6 @@ test('init notes new actions, but not a schema or formatting change with identic
   assert.equal(existsSync(join(context.home, '.t3')), false);
   const file = join(context.cwd, 't3.json');
   const { scripts } = JSON.parse(readFileSync(file));
-  // Reordering object keys changes bytes, not action behavior.
   writeFileSync(file, JSON.stringify({ scripts: scripts.map(script => Object.fromEntries(Object.entries(script).reverse())) }));
   output.length = 0;
   await runCli(['init'], context, { print });

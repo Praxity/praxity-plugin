@@ -15,8 +15,6 @@ const vscodeSections = Object.keys(stateSchema.$defs.vscodeSettings.properties);
 const vscodeGlobs = Object.keys(stateSchema.$defs.vscodeGlobs.properties);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
-// T3 runs actions in a login shell that may not have ~/.praxity/bin on PATH
-// yet, so actions call the launcher by its home-relative path.
 
 export function courseActions(port) {
   return [
@@ -73,7 +71,6 @@ function merge(project, port) {
   const scripts = [];
   for (const script of project.scripts ?? []) {
     const action = generated.get(script.name);
-    // A familiar name alone does not make a command ours to replace.
     if (!recognizesCourseAction(script, action)) { scripts.push(script); pending.delete(script.name); }
     else if (pending.has(script.name)) { scripts.push(pending.get(script.name)); pending.delete(script.name); }
   }
@@ -119,8 +116,6 @@ function vscodeAt(folder) {
     if (!(error instanceof SyntaxError) && error.code !== 'ERR_ENCODING_INVALID_ENCODED_DATA') throw error;
   }
   const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-  // Refuse rewrites that lose duplicate keys, numeric precision or key order.
-  // JSONC and noncanonical value spellings also get manual instructions.
   const compact = text.replace(/"(?:\\.|[^"\\])*"|\s+/g, token => token.startsWith('"') ? token : '');
   if (!object(settings) || (stat && compact !== JSON.stringify(settings)) ||
       vscodeSections.some(section => Object.hasOwn(settings, section) && !object(settings[section]))) settings = undefined;
@@ -162,8 +157,6 @@ function mergeVscode(plan, entry) {
   const indent = text.match(/(?:^|\n)([ \t]+)"/)?.[1] ?? '  ';
   const newline = text.includes('\r\n') ? '\r\n' : '\n';
   const output = JSON.stringify(settings, null, indent).replaceAll('\n', newline) + newline;
-  // Reserve additions before writing, but claim them only after their exact bytes
-  // are installed. A retry can settle a killed init without adopting author keys.
   entry.pendingVscodeSettings = { sha256: sha256(output), entries: added };
   return { ...plan, output };
 }
@@ -183,8 +176,6 @@ function acquireLock(file) {
     try { process.kill(prior.pid, 0); }
     catch (error) {
       if (error.code !== 'ESRCH') throw error;
-      // A dead init cannot be writing either file. Its durable reservation is
-      // reused on retry, even if it stopped before replacing t3.json.
       unlinkSync(file);
       continue;
     }
@@ -200,7 +191,7 @@ export function initCourse({ folder, home }) {
   const items = readdirSync(folder, { withFileTypes: true });
   if (!items.some(item => item.isFile() && (item.name === 'course.yaml' || item.name.endsWith('.prax')))) throw new Error(`Not a course folder: ${folder}; expected course.yaml or .prax lessons.`);
   const { file, bytes, project } = projectAt(folder);
-  merge(project, portRule.minimum); // Preflight the script limit before creating private state.
+  merge(project, portRule.minimum);
   const vscode = vscodeAt(folder);
   home = realpathSync(home);
   const directory = join(home, '.praxity/toolkit-state'), registry = join(directory, 't3-actions.json');
@@ -214,7 +205,6 @@ export function initCourse({ folder, home }) {
   mkdirSync(directory, { recursive: true });
   const release = acquireLock(lock);
   try {
-    // Read again after taking the lock, so another init's reservation is visible.
     if (readJson(registry).bytes !== prior.bytes) throw new Error('Project actions registry changed. Retry praxity init.');
     let own = state.courses.find(entry => entry.folder === folder);
     const used = new Set();
@@ -238,8 +228,6 @@ export function initCourse({ folder, home }) {
     const newline = bytes.includes('\r\n') ? '\r\n' : '\n';
     const output = JSON.stringify(merged, null, indent).replaceAll('\n', newline) + newline;
     const settings = mergeVscode(vscode, own);
-    // Reserve first. If the project write fails or init stops, retry keeps the
-    // same port; no other course can claim it in the meantime.
     const stateBytes = JSON.stringify(state, null, 2) + '\n';
     if (stateBytes !== prior.bytes) writeAtomic(registry, stateBytes);
     if (readJson(file).bytes !== bytes) throw new Error('t3.json changed during praxity init; retry to merge the new contents.');

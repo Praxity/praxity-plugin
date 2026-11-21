@@ -1,6 +1,6 @@
 # Rubato rules
 
-Read `AGENTS.local.md` when present. This scaffold has no glossary or ADRs yet.
+Read `AGENTS.local.md` when present. This repository has no glossary. Decisions live in `docs/adr/`.
 `pack.json` owns release pins. `schemas/` owns wire formats. Keep bootstrap parsing
 limited to finding Node; use the schema validator once the pinned Node runs.
 
@@ -18,3 +18,5 @@ stable release, so it would replace a newer pin.
 
 Preserve unowned files and modified adapter files. Keep activation atomic and
 test recovery when changing installation or ownership rules.
+
+No code comments. Record non-obvious decisions in `docs/adr/` and known shortcuts as backlog items. `node scripts/check-comments.mjs` enforces this with a ratchet (`--update` after deleting comments).

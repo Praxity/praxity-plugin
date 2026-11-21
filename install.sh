@@ -1,5 +1,4 @@
 #!/bin/sh
-# Run from a reviewed checkout. No system Node, sudo or shell-profile edits.
 set -eu
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT="$HOME/.praxity/toolkit"
@@ -21,7 +20,6 @@ done
 case "$HOME" in /*) ;; *) die 'HOME must be an absolute path' ;; esac
 case "$HOME" in *'
 '*) die 'HOME must not contain newlines' ;; esac
-# Resolve HOME once, then refuse symlinks in every descendant ancestor.
 INSTALL_HOME=$(CDPATH= cd -P -- "$HOME" && pwd -P) || die 'Cannot resolve HOME'
 ROOT="$INSTALL_HOME/.praxity/toolkit"
 BIN="$INSTALL_HOME/.praxity/bin"
@@ -88,7 +86,6 @@ if [ -z "$PLATFORM" ]; then
   case "$OS:$CPU" in
     Darwin:arm64) PLATFORM=darwin-arm64 ;;
     Darwin:x86_64)
-      # A translated shell reports x86_64 on Apple Silicon. Use native runtimes.
       if [ "$(sysctl -in sysctl.proc_translated 2>/dev/null || true)" = 1 ]; then PLATFORM=darwin-arm64;
       else PLATFORM=darwin-x64; fi ;;
     *) die "Unsupported platform: $OS $CPU. Only Apple Silicon and Intel macOS are implemented." ;;
@@ -157,7 +154,6 @@ download() (
   cd "$ROOT/.cache"
   printf 'Download: %s\n' "$URL"
   PARTIAL=$(new_temp)
-  # Release bootstraps can bundle archives under their content hash.
   if [ -f "$SCRIPT_DIR/archives/$FILE" ]; then
     capture "$PARTIAL" cat "$SCRIPT_DIR/archives/$FILE" || die 'Bundled archive read failed; rerun the same install command'
   else
@@ -198,10 +194,8 @@ else
   STAGE="$WORK/stage"
   mkdir "$STAGE"
   TAB=$(printf '\t')
-  # Check every download before publishing a version or launcher.
   while IFS="$TAB" read -r KIND ID URL HASH FORMAT STRIP ENTRY; do
     if [ "$KIND:$ID" = runtime:node ]; then
-      # Bootstrap already logged Node; retain the plan's cache verification.
       download "$URL" "$HASH" "$FORMAT" > /dev/null
     else
       download "$URL" "$HASH" "$FORMAT"

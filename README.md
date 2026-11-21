@@ -518,9 +518,10 @@ each archive. Installing or adapting a tool does not relicense it.
 
 ## Development
 
-Use Node >=24.18 and <25. There are no package dependencies.
+Use Node >=24.18 and <25. There are no runtime package dependencies. Run `npm ci` to install the development-only comment checker dependency.
 
 ```sh
+npm run lint
 npm run validate
 node --test
 ```

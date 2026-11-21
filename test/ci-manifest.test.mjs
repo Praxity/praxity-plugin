@@ -6,7 +6,6 @@ import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import { fixture, repository } from './helpers.mjs';
 
-// Exercise the workflow's actual manifest conversion without GitHub credentials.
 const workflow = readFileSync(join(repository, '.github/workflows/ci.yml'), 'utf8');
 const conversion = workflow.match(/<<'NODE'\r?\n([\s\S]*?)\r?\n\s*NODE\r?\n/)?.[1];
 

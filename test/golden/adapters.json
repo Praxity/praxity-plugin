@@ -7,8 +7,8 @@
     ".claude/skills/install-praxity/SKILL.md": "4040b6a90962756ad4162a8132a52b2fedb998ca236f3a67e3d77ce9b4e582ee",
     ".claude/skills/studio-editor/references/annotation-examples.md": "f2fb3bdcea363192e69a29baf901d7865098575d7b8ec2acbe5d00adbc1982ef",
     ".claude/skills/studio-editor/references/review-cli.md": "bcf6aaeb70227b0b38ef6b750edcfaa718f8b5d22ee33b6c789ce2e4dc9487ca",
-    ".claude/skills/studio-editor/scripts/resolve-annotation.mjs": "cea369258564deee15134d76622bda8192c543dfd1a2baec4287a8528b1004d3",
-    ".claude/skills/studio-editor/scripts/run-praxity.mjs": "3646aac1221e1b4872228849f216956dbd7d07f9a438c3bfbdefe47581d9ad26",
+    ".claude/skills/studio-editor/scripts/resolve-annotation.mjs": "928d868e0a3af09c0f4f8ccc34e7def3daf12fcb45a6c9438651067ded1b83b3",
+    ".claude/skills/studio-editor/scripts/run-praxity.mjs": "b9dab766aab716d42bed992a6488a3c897d2e876ab6b8e2fcf6990dd9bab054f",
     ".claude/skills/studio-editor/SKILL.md": "d2f6db1ffd7279c28b6436c34d5f10acb322ba2f6ff3ccbc53b188f244f03fb1"
   },
   "codex": {
@@ -19,8 +19,8 @@
     ".agents/skills/install-praxity/SKILL.md": "4040b6a90962756ad4162a8132a52b2fedb998ca236f3a67e3d77ce9b4e582ee",
     ".agents/skills/studio-editor/references/annotation-examples.md": "f2fb3bdcea363192e69a29baf901d7865098575d7b8ec2acbe5d00adbc1982ef",
     ".agents/skills/studio-editor/references/review-cli.md": "bcf6aaeb70227b0b38ef6b750edcfaa718f8b5d22ee33b6c789ce2e4dc9487ca",
-    ".agents/skills/studio-editor/scripts/resolve-annotation.mjs": "cea369258564deee15134d76622bda8192c543dfd1a2baec4287a8528b1004d3",
-    ".agents/skills/studio-editor/scripts/run-praxity.mjs": "3646aac1221e1b4872228849f216956dbd7d07f9a438c3bfbdefe47581d9ad26",
+    ".agents/skills/studio-editor/scripts/resolve-annotation.mjs": "928d868e0a3af09c0f4f8ccc34e7def3daf12fcb45a6c9438651067ded1b83b3",
+    ".agents/skills/studio-editor/scripts/run-praxity.mjs": "b9dab766aab716d42bed992a6488a3c897d2e876ab6b8e2fcf6990dd9bab054f",
     ".agents/skills/studio-editor/SKILL.md": "d2f6db1ffd7279c28b6436c34d5f10acb322ba2f6ff3ccbc53b188f244f03fb1"
   }
 }

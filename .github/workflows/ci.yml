@@ -50,6 +50,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24.22.1
+      - run: npm ci
+      - run: npm run lint
       - run: npm run validate
       - run: node --test
       - run: npm run validate:release
@@ -78,6 +80,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24.22.1
+      - run: npm ci
+      - run: npm run lint
       - run: npm run validate
       - run: node --test
       - name: Real manifest install in an isolated home

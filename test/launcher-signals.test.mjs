@@ -16,8 +16,6 @@ async function until(condition, message, limit = 30_000) {
 }
 const posixOnly = { skip: process.platform === 'win32' && 'POSIX signals only' };
 
-// Installs a pack whose tool entry is the given source, then starts the
-// launcher as its own process group, as a terminal's foreground job is.
 function launch(t, id, source, args, env = {}) {
   const setup = installation(t, { tools: ['studio', 'check'] }), tool = setup.pack.tools.find(tool => tool.id === id);
   const payload = join(setup.root, `fake ${id}`), ready = join(setup.root, 'ready'), closed = join(setup.root, 'closed');
@@ -29,7 +27,6 @@ function launch(t, id, source, args, env = {}) {
     { cwd: setup.root, env: { ...setup.env, ...env, TOOL_READY: ready, TOOL_CLOSED: closed }, stdio: 'ignore', detached: true });
   const exited = once(launcher, 'exit');
   const pids = [];
-  // Runs before the fixture's own cleanup removes the temporary home.
   t.after(() => {
     for (const pid of pids) if (alive(pid)) process.kill(pid, 'SIGKILL');
     if (launcher.exitCode === null && launcher.signalCode === null) launcher.kill('SIGKILL');
@@ -57,8 +54,6 @@ test('unrelated tools do not inherit a Studio parent identity', posixOnly, async
   assert.equal(connected, null);
 });
 
-// Studio's standalone CLI stops on its first SIGINT or SIGTERM, removes both
-// listeners, and takes a moment to close its server. A second signal kills it.
 const studio = `import { createServer } from 'node:http';
 import { writeFileSync } from 'node:fs';
 const server = createServer((request, response) => response.end('studio'));
@@ -117,7 +112,6 @@ writeFileSync(process.env.TOOL_READY, JSON.stringify({ pid: holder.pid }));
 process.exit(0);
 `, ['setup', 'check']);
   await started();
-  // Lets the launcher see setup's exit before the signal arrives.
   await delay(1000);
   launcher.kill('SIGTERM');
   const stopped = await Promise.race([exited, delay(10_000, 'still running')]);

@@ -43,7 +43,6 @@ test('interrupted install resumes from verified downloads', t => {
   const curl = shell('command -v curl'); passed(curl);
   writeFileSync(join(mock, 'curl'), `#!/bin/sh\ncase "${'$'}*" in *typst%20archive*) if [ ! -e ${quote(posix(marker))} ]; then touch ${quote(posix(marker))}; kill -TERM "${'$'}PPID"; exit 1; fi;; esac\nexec ${quote(curl.stdout.trim())} "${'$'}@"\n`, { mode: 0o755 });
   const original = setup.env.PATH;
-  // A POSIX PATH is set inside bash, avoiding Windows PATH conversion rules.
   const result = shell(`export PATH=${quote(posix(mock))}:"${'$'}PATH"; sh ${quote(posix(join(repository, 'install.sh')))} --manifest ${quote(pathToFileURL(setup.manifest).href)} --platform darwin-arm64`, { env: setup.env });
   assert.notEqual(result.status, 0); assert.ok(existsSync(marker), result.stderr);
   assert.equal(existsSync(join(setup.toolkit, 'active')), false);

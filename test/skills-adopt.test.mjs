@@ -150,7 +150,6 @@ test('a failed backup copy leaves original project files and ownership untouched
   const options = { base: context.cwd, home: context.home, host: 'claude', outputs: buildAdapters({ source: join(context.root, 'skills') }), adopt: true, yes: true };
   const messages = [];
   const copy = fs.cpSync;
-  // Fail at the filesystem boundary after writing only part of a backup.
   fs.cpSync = (source, target) => {
     assert.equal(source, folder);
     mkdirSync(target); writeFileSync(join(target, 'partial.txt'), 'Incomplete');
@@ -212,7 +211,6 @@ for (const scope of ['user', 'project']) test(`${scope} adoption refuses a symli
 
 test('project adoption keeps backups under home and out of Git status', async t => {
   const { context } = fixture(t);
-  // Exercise a real cross-volume backup when checkout and temporary home use different drives.
   if (parse(context.home).root !== parse(repository).root) {
     context.cwd = realpathSync(mkdtempSync(join(repository, '.skills-adopt-test-')));
     t.after(() => rmSync(context.cwd, { recursive: true, force: true }));

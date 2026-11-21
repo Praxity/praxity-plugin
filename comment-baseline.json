@@ -1,0 +1,6 @@
+{
+	"ignore": [
+		"test/fixtures/skills-rollback-065d777/**"
+	],
+	"files": {}
+}
