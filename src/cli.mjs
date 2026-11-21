@@ -97,7 +97,8 @@ export async function runCli(args, context, dependencies = {}) {
     if (!selected.length) print('No installed tools have setup commands.');
     return code;
   }
-  const tool = context.pack.tools.find(tool => tool.id === (['check', 'trace', 'print', 'import'].includes(command) ? command : 'studio'));
+  if (command === 'import') throw new Error("Import isn't included in this release.");
+  const tool = context.pack.tools.find(tool => tool.id === (['check', 'trace', 'print'].includes(command) ? command : 'studio'));
   if (!tool) throw new Error('Studio is absent from the manifest');
   return execute(context, tool, tool.id === 'studio' ? args : rest);
 }

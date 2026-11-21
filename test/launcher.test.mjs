@@ -1,17 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, mkdirSync, writeFileSync, symlinkSync } from 'node:fs';
+import { cpSync, existsSync, readFileSync, mkdirSync, writeFileSync, symlinkSync } from 'node:fs';
 import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { runCli } from '../src/cli.mjs';
 import { loadSchema, validateSchema } from '../src/schema.mjs';
 import { executeTool, toolInvocation } from '../src/tools.mjs';
-import { fixture, fakeTool } from './helpers.mjs';
+import { fixture, fakeTool, repository } from './helpers.mjs';
 
 test('tool commands dispatch unchanged; all other arguments reach Studio unchanged', async t => {
   const { context } = fixture(t);
   const calls = [];
   const execute = async (_, tool, args) => { calls.push([tool.id, args]); return 7; };
-  for (const id of ['check', 'trace', 'print', 'import']) {
+  for (const id of ['check', 'trace', 'print']) {
     assert.equal(await runCli([id, 'run', 'path with spaces', '--flag'], context, { execute }), 7);
     assert.deepEqual(calls.at(-1), [id, ['run', 'path with spaces', '--flag']]);
   }
@@ -85,4 +86,19 @@ test('Studio process preserves empty, quoted, Unicode and shell-like arguments; 
   const report = JSON.parse(output);
   assert.deepEqual(validateSchema(report, loadSchema('doctor')), []);
   assert.equal(code, report.exitCode);
+});
+
+for (const legacy of [false, true]) test(`Import CLI is unavailable with legacy files ${legacy}`, t => {
+  const { context } = fixture(t);
+  if (legacy) {
+    context.pack.tools.push({ ...context.pack.tools.find(tool => tool.id === 'print'), id: 'import' });
+    fakeTool(context, 'import', 'throw new Error("OLD IMPORT RAN");');
+  }
+  for (const name of ['src', 'schemas']) cpSync(join(repository, name), join(context.root, name), { recursive: true });
+  writeFileSync(join(context.root, 'pack.json'), JSON.stringify(context.pack));
+  writeFileSync(join(context.root, 'state.json'), JSON.stringify(context.state));
+  const result = spawnSync(process.execPath, [join(context.root, 'src/cli.mjs'), 'import', 'old-course.zip'], { encoding: 'utf8' });
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, '');
+  assert.equal(result.stderr, "Import isn't included in this release.\n");
 });

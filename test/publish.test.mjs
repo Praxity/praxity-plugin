@@ -149,8 +149,8 @@ test('dry-run creates a schema-valid pack with exact hashes and tested SHA, with
   assert.match(names, /rubato\/install.sh/);
   assert.doesNotMatch(names, /(?:\.git\/|test\/|build-inputs|studio-cli-review)/);
   const original = realPack();
-  assert.equal(original.version, '0.1.3');
-  for (const id of ['print', 'import']) {
+  assert.equal(original.version, '0.1.4');
+  for (const id of ['print']) {
     assert.deepEqual(pack.tools.find(tool => tool.id === id).archives, original.tools.find(tool => tool.id === id).archives);
   }
   assert.ok(pack.tools.find(tool => tool.id === 'check').archives['darwin-arm64'].url.startsWith('https://github.com/Praxity/rubato/'));
@@ -537,7 +537,7 @@ test('padded generated release installs using its exported installer and local a
   assertCleaned();
   const extracted = join(f.root, 'extracted'); mkdirSync(extracted);
   execFileSync('tar', ['-xzf', join(f.options.outputDir, 'rubato-0.1.3.tar.gz'), '-C', extracted]);
-  const setup = installation(t, { tools: ['studio', 'check', 'trace', 'print', 'import'] });
+  const setup = installation(t, { tools: ['studio', 'check', 'trace', 'print'] });
   for (const [id, runtime] of Object.entries(generated.runtimes)) runtime.archives['darwin-arm64'] = setup.pack.runtimes[id].archives['darwin-arm64'];
   for (const tool of generated.tools) {
     if (tool.id !== 'studio') tool.archives['darwin-arm64'] = setup.pack.tools.find(other => other.id === tool.id).archives['darwin-arm64'];

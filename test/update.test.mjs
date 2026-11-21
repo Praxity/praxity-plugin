@@ -21,8 +21,8 @@ function releaseArchive(root, file, member) {
   return readFileSync(file);
 }
 
-function releaseFixture(t) {
-  const setup = installation(t, { tools: ['studio'] });
+function releaseFixture(t, legacyImport = false) {
+  const setup = installation(t, { tools: legacyImport ? ['studio', 'import'] : ['studio'], legacyImport });
   passed(setup.install());
   t.diagnostic('Old pack installed; exercising update with local release bytes.');
   const project = join(setup.root, 'course'); mkdirSync(project);
@@ -45,6 +45,7 @@ function releaseFixture(t) {
       sha256: hash(bytes), stripComponents: 1 };
   }
   tool.version = '0.3.0-main.abcdef01';
+  setup.pack.tools = setup.pack.tools.filter(tool => tool.id !== 'import');
   setup.pack.version = '0.2.0';
   tool.sourceRevision = studioSha;
   setup.pack.platforms = ['darwin-arm64', 'darwin-x64'];
@@ -353,4 +354,24 @@ test('update rejects hard links in the release bootstrap', async t => {
   await assert.rejects(f.update(), /Unsafe release bootstrap link/);
   assert.ok(!f.commands.some(command => command.command === 'sh'));
   assert.equal(readFileSync(join(f.toolkit, 'active'), 'utf8'), '0.1.0\n\n');
+});
+
+test('update drops an earlier Import and its managed skill, and rollback restores the old pack', async t => {
+  const f = releaseFixture(t, true);
+  passed(f.cli('skills install --host claude --scope user'));
+  const skill = join(f.home, '.claude/skills/fixture-import/SKILL.md');
+  const original = readFileSync(skill, 'utf8');
+  assert.equal(await f.update(), 0);
+  assert.equal(JSON.parse(f.cli('version').stdout).tools.some(tool => tool.id === 'import'), false);
+  assert.equal(existsSync(skill), false);
+  const unavailable = f.cli('import old-course.zip');
+  assert.equal(unavailable.status, 1);
+  assert.equal(unavailable.stdout, '');
+  assert.equal(unavailable.stderr, "Import isn't included in this release.\n");
+  assert.ok(existsSync(join(f.toolkit, '0.1.0/tools/import')));
+  passed(f.cli('rollback'));
+  assert.equal(JSON.parse(f.cli('version').stdout).pack, '0.1.0');
+  assert.equal(JSON.parse(f.cli('version').stdout).tools.find(tool => tool.id === 'import').installed, true);
+  passed(f.cli('skills refresh --scope user'));
+  assert.equal(readFileSync(skill, 'utf8'), original);
 });

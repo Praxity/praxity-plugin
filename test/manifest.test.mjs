@@ -27,7 +27,8 @@ test('a tool can record its full source revision, with malformed revisions refus
 
 test('real pack validates and every published archive has a complete contract', () => {
   const pack = realPack();
-  assert.equal(pack.version, '0.1.3');
+  assert.equal(pack.version, '0.1.4');
+  assert.deepEqual(pack.tools.map(tool => tool.id), ['studio', 'check', 'trace', 'print']);
   assert.equal(JSON.parse(readFileSync(join(repository, 'package.json'), 'utf8')).version, pack.version);
   assert.deepEqual(validateSchema(pack, loadSchema('pack')), []);
   assert.deepEqual(validateManifest(pack), []);

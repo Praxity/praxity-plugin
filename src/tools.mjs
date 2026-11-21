@@ -47,12 +47,9 @@ export function toolInvocation(context, tool, args) {
 
 export function toolEnvironment(context) {
   const typst = join(context.root, 'runtimes/typst', context.pack.runtimes.typst.entry[context.state.platform]);
-  const studio = context.pack.tools.find(tool => tool.id === 'studio');
-  const studioLauncher = join(context.root, 'bin', 'praxity-studio');
   const env = { ...context.env,
     PATH: [join(context.root, 'bin'), join(context.root, 'runtimes/node/bin'), context.env.PATH ?? ''].join(delimiter),
     PRAXITY_PRINT_TYPST: typst,
-    ...(studio ? { PRAXITY_CLI: studioLauncher } : {}),
   };
   delete env.PRAXITY_PARENT_PID;
   return env;

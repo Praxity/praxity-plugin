@@ -476,11 +476,11 @@ test('doctor names skills missing after an upgrade, and refresh adds them withou
   await runCli(['skills', 'install', '--host', 'claude', '--scope', 'user'], context, quiet);
   const userSkill = join(context.home, '.claude/skills/my-notes/SKILL.md');
   mkdirSync(join(userSkill, '..')); writeFileSync(userSkill, 'USER SKILL');
-  fakeTool(context, 'import');
-  mkdirSync(join(context.root, 'tools/import/skill'));
-  writeFileSync(join(context.root, 'tools/import/skill/SKILL.md'), '---\nname: praxity-import\ndescription: Convert a course.\n---\nImport skill.\n');
+  fakeTool(context, 'trace');
+  mkdirSync(join(context.root, 'tools/trace/skill'));
+  writeFileSync(join(context.root, 'tools/trace/skill/SKILL.md'), '---\nname: praxity-trace\ndescription: Report on a course.\n---\nTrace skill.\n');
   const host = () => doctor(context, () => ({ code: 0, stdout: 'v24.22.1', stderr: '' })).items.find(item => item.id === 'host.claude.user');
-  assert.deepEqual(host(), { id: 'host.claude.user', status: 'partial', message: 'Missing skills: praxity-import.', fix: 'praxity skills install --host claude --scope user' });
+  assert.deepEqual(host(), { id: 'host.claude.user', status: 'partial', message: 'Missing skills: praxity-trace.', fix: 'praxity skills install --host claude --scope user' });
   await runCli(['skills', 'refresh', '--scope', 'user'], context, quiet);
   assert.equal(host().status, 'ok');
   assert.equal(readFileSync(userSkill, 'utf8'), 'USER SKILL');
