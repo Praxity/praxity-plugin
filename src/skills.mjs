@@ -122,7 +122,6 @@ function writeState(base, state) {
 }
 
 function readDigests(base) {
-  // Optional metadata cannot prevent recovery with an older pack or a fresh baseline.
   try {
     const digests = JSON.parse(readFileSync(contained(base, '.praxity/toolkit-skills-digests.json'), 'utf8'));
     return validateSchema(digests, loadSchema('skills-digests')).length ? {} : digests;
@@ -177,7 +176,6 @@ function changeSkills({ base, home = base, otherBase, host, outputs, remove, ado
         const unowned = !owned.includes(name);
         if (unowned && !adopt) throw new Error(`Unowned skill folder: ${directory}; refusing overwrite. Run the install with --adopt to review file differences, then --adopt --yes to back up and replace.`);
         if (!adopt || remove) {
-          // Older records have no digest; preserve their contents before the first refresh.
           if (observed.get(directory) !== digests[value]?.[name])
             refreshBackups.push({ host: value, name, directory });
           return directory;
@@ -211,7 +209,6 @@ function changeSkills({ base, home = base, otherBase, host, outputs, remove, ado
     if (!previews.some(preview => preview.action === 'Adopt')) print('No unowned skill folders to adopt.');
     throw new Error('Adoption preview only; no files changed. Review the differences, then rerun with --adopt --yes to back up and replace.');
   }
-  // Copy and publish in home before claiming names or deleting originals, even across volumes.
   for (const { name, directory, prefix } of backups) {
     mkdirSync(dirname(prefix), { recursive: true });
     const container = mkdtempSync(prefix);
@@ -222,9 +219,7 @@ function changeSkills({ base, home = base, otherBase, host, outputs, remove, ado
     renameSync(pending, backup);
     print(`Backed up ${name} to ${backup}`);
   }
-  // A partial install must not leave an older baseline trusted for newly saved files.
   writeRecord(base, 'toolkit-skills-digests', Object.fromEntries(Object.entries(digests).filter(([value]) => !selected.includes(value))));
-  // Record names before copying so a rerun can replace a partial install.
   if (!remove) {
     for (const { value, names } of changes) {
       if (!state.hosts.includes(value)) state.hosts.push(value);
@@ -236,7 +231,6 @@ function changeSkills({ base, home = base, otherBase, host, outputs, remove, ado
     for (const directory of directories) {
       const current = existsSync(directory) ? skillDigest(filesIn(directory)) : null;
       if (current !== observed.get(directory)) throw changedDuringRefresh(directory);
-      // shortcut: a save after this recheck but before deletion finishes can still be lost; use retained originals if concurrent editing must be fully supported.
       rmSync(directory, { recursive: true, force: true });
     }
     if (remove) {

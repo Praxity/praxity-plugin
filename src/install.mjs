@@ -53,7 +53,6 @@ if (command === 'plan') {
   }
 } else if (command === 'finalize') {
   inspectStage(stage, process.argv[6]);
-  // Artifact ancestors must be real directories before any generated writes.
   for (const category of ['runtimes', 'tools', 'bin', 'skills']) {
     const path = join(stage, category);
     if (existsSync(path) && lstatSync(path).isSymbolicLink()) throw new Error(`Stage ancestor symlink refused: ${path}`);
@@ -81,8 +80,6 @@ if (command === 'plan') {
   buildAdapters({ source: join(stage, 'skills'),
     tools: pack.tools.filter(tool => tool.skillPath && plan.some(entry => entry.kind === 'tool' && entry.id === tool.id)).map(tool => join(stage, 'tools', tool.id, tool.skillPath)) });
   mkdirSync(join(stage, 'bin'));
-  // Tool wrappers resolve relative to their pack, so staged paths never leak
-  // into launchers and the shared Node also serves Check's compiled entry.
   for (const tool of pack.tools.filter(tool => plan.some(entry => entry.kind === 'tool' && entry.id === tool.id))) {
     const nodeEntry = pack.runtimes.node.entry[platform];
     const call = `${tool.runner === 'node' ? `"${'$'}PACK_DIR/runtimes/node/${nodeEntry}" ` : ''}"${'$'}PACK_DIR/tools/${tool.id}/${tool.entry}"`;

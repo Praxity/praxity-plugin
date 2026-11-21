@@ -10,7 +10,6 @@ test('all five T3 actions execute the installed launcher without it on PATH', as
   const { context } = fixture(t);
   writeFileSync(join(context.cwd, 'course.yaml'), 'course fixture\n');
   mkdirSync(join(context.home, '.praxity/bin'), { recursive: true });
-  // The launcher is the shell boundary; capture exactly what each action passes.
   writeFileSync(join(context.home, '.praxity/bin/praxity'), '#!/bin/sh\nprintf \'%s\\n\' "$@"\nprintf \'\\n\'\n', { mode: 0o755 });
   const env = { ...process.env, HOME: posix(context.home), BASH_ENV: undefined };
   const run = command => shell(`PATH=/usr/bin:/bin; export PATH; ${command}`, { env });

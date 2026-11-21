@@ -9,7 +9,6 @@ import { installationPlan } from '../src/manifest.mjs';
 test('install logs both digests for every verified archive, including cached archives', t => {
   const setup = installation(t);
   const typst = setup.pack.runtimes.typst.archives['darwin-arm64'];
-  // Fixed tar.gz of the fixture's typst and LICENSE, without host tar timestamps.
   writeFileSync(fileURLToPath(typst.url), Buffer.from('H4sIAAAAAAAACiupLCguYaAtMDAwMDA3NQXTBgYG6LSBgZEhgg0WNzcwMWdQMKCxu8CgtLgksYjBgC52DUKgrKiflJmnX5zBlVqRWaJgwDXQDhoFdAU+ns6ufsGuNLUDlKnNTEzw5H8ztPxvZm5qMJr/6QFCQOW/QlpmRUlpUapCTmZyal5y6mghMApGwSgYBcMeAADNjljWAAwAAA==', 'base64'));
   typst.sha256 = 'cdaa2424b8e0ca7d449d836f53cfd04040e5d5c786841c25025fe7e9c5a94b76';
   setup.save();

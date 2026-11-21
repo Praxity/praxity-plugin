@@ -48,14 +48,12 @@ export function toolInvocation(context, tool, args) {
 export function toolEnvironment(context) {
   const typst = join(context.root, 'runtimes/typst', context.pack.runtimes.typst.entry[context.state.platform]);
   const studio = context.pack.tools.find(tool => tool.id === 'studio');
-  // Import's verifier needs Studio alone, rather than the umbrella dispatcher.
   const studioLauncher = join(context.root, 'bin', 'praxity-studio');
   const env = { ...context.env,
     PATH: [join(context.root, 'bin'), join(context.root, 'runtimes/node/bin'), context.env.PATH ?? ''].join(delimiter),
     PRAXITY_PRINT_TYPST: typst,
     ...(studio ? { PRAXITY_CLI: studioLauncher } : {}),
   };
-  // A parent identity belongs to one direct spawn, never an inherited tool chain.
   delete env.PRAXITY_PARENT_PID;
   return env;
 }
@@ -70,18 +68,9 @@ export async function executeTool(context, tool, args) {
   const setup = args[0] === tool.setup?.[0];
   const stdio = ['inherit', setup ? 'pipe' : 'inherit', 'inherit'];
   if (tool.id === 'studio') {
-    // Studio consumes IPC EOF; executable bootstraps must consume/delete the
-    // per-spawn PID before importing commands or creating descendants.
     if (tool.runner === 'node') stdio.push('ipc');
     else invocation.env.PRAXITY_PARENT_PID = String(process.pid);
   }
-  // Stopping the launcher stops the tool, and the launcher exits only after
-  // the tool has. Other tools run detached: Node calls setsid(), so each gets
-  // a new session without the terminal as its controlling terminal. Ctrl+C
-  // and Ctrl+\ then reach only the launcher, which forwards them once: Studio
-  // stops on its first signal and dies on a second. Ctrl+Z suspends only the
-  // launcher; the tool keeps running. Setup keeps the terminal for its consent
-  // prompts, so the terminal's signals already reach it. Windows has neither.
   const child = spawn(invocation.command, invocation.args, { env: invocation.env,
     detached: !setup && process.platform !== 'win32', stdio });
   let output = '';
@@ -92,22 +81,16 @@ export async function executeTool(context, tool, args) {
   const forward = signal => { if (!setup || !['SIGINT', 'SIGQUIT'].includes(signal)) child.kill(signal); };
   const signals = ['SIGINT', 'SIGQUIT', 'SIGTERM', 'SIGHUP'];
   for (const signal of signals) process.on(signal, forward);
-  // Once the tool has exited there is nothing to forward to, and the launcher
-  // stops on the next signal even while a grandchild holds the tool's output.
   const release = () => { for (const signal of signals) process.off(signal, forward); };
   child.once('exit', release);
   let code;
   try {
     code = await new Promise((resolve, reject) => {
       child.on('error', reject);
-      // A tool ended by a signal exits 128 plus its number, as a shell reports it.
       child.on('close', (code, signal) => resolve(signal ? 128 + constants.signals[signal] : code));
     });
   } finally { release(); }
   if (setup && tool.id === 'check') {
-    // Check currently exposes refusal in setup's text result, not doctor JSON.
-    // Record only its explicit refusal line; never classify a missing component
-    // as declined. Replace this adapter when Check persists consent itself.
     const refused = [...output.matchAll(/(?:^|\n)(browser|java|verapdf): declined; dependent checks will report not run/g)].map(match => match[1]);
     if (refused.length) recordDeclined(context, tool.id, refused);
   }

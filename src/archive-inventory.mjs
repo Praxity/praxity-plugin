@@ -10,8 +10,6 @@ function tar(archive, args) {
   return result.stdout;
 }
 
-// Hash gzip payloads in one pass. XZ payloads use BSD tar, avoiding a new
-// bootstrap dependency on an xz executable. Typst's XZ archive is small.
 export function archiveInventory(archive, strip, { allowHardlinks = true } = {}) {
   const members = [];
   if (archive.endsWith('.gz')) {

@@ -16,7 +16,6 @@ for (const [name, os, cpu, translated, expected] of [
   setup.pack.platforms.push('darwin-x64');
   for (const artifact of [...Object.values(setup.pack.runtimes), ...setup.pack.tools]) {
     artifact.archives['darwin-x64'] = structuredClone(artifact.archives['darwin-arm64']);
-    // A wrong platform must fail rather than silently share the fixture archive.
     if (expected) artifact.archives[expected === 'darwin-x64' ? 'darwin-arm64' : 'darwin-x64'] =
       artifact.archives['darwin-x64'].status === 'published'
         ? { ...artifact.archives['darwin-x64'], url: 'file:///missing-wrong-platform.tar.gz' }
@@ -47,7 +46,6 @@ for (const [name, cpu, translated, expected, forced] of [
   ['Rosetta', 'x86_64', '1', 'darwin-arm64', false],
 ]) test(`rollback verifies the native platform on ${name}`, t => {
   const setup = installation(t);
-  // A single-platform previous pack makes using the wrong platform observable.
   setup.pack.platforms = [expected];
   for (const artifact of [...Object.values(setup.pack.runtimes), ...setup.pack.tools]) {
     artifact.archives = { [expected]: artifact.archives['darwin-arm64'] };

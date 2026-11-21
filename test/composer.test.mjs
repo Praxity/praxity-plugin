@@ -52,7 +52,6 @@ test('French banks remain unverified while all available checks finish before as
   assert.doesNotMatch(attack, /In an unattended run, stop/);
 });
 
-// assessment-writing v3's gate matches polls by ref and can return "tooling"; composer passes on both.
 test('composer declares polls to assessment-writing and defers a tooling-limited bank to step 9', () => {
   const skill = readFileSync(new URL('../skills/composer/SKILL.md', import.meta.url), 'utf8');
   const attack = skill.split('2. Write every keyed')[1].split('3. Sort facts')[0];
@@ -148,7 +147,6 @@ for (const [id, patterns, fix] of cases) test(`composer selection CLI checks ${i
   assert.equal(invalidRecord.status, 1, 'Only final-check and written-task may use record');
   assert.deepEqual(invalidRecord.untracedPatterns, patterns.filter(pattern => !['final-check', 'written-task'].includes(pattern)));
 
-  // Outside-course entries must be real fixes even when this fixture requires none.
   for (const outsideCourse of [
     [{ barrier: 'does-not-exist', fix: 'Correct the display.' }],
     [{ barrier: 'b1', fix: 'Correct the display.' }],

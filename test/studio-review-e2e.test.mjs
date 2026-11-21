@@ -7,11 +7,6 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { repository } from './helpers.mjs';
 
-// Run: PRAXITY_BIN=/path/to/praxity.mjs node --test test/studio-review-e2e.test.mjs
-// PRAXITY_BIN is one real Studio launcher or packaged .mjs/.js CLI path, not shell text.
-// No variable, or a build without comments support, skips with a reason.
-// Seed the documented local store format; every inspection, edit and reply uses the CLI.
-// No browser assets or --review launcher are needed to exercise the comments procedure.
 test('live review fixture follows the packaged shared edit routing', () => {
   const skill = readFileSync(join(repository, 'skills/studio-editor/SKILL.md'), 'utf8');
   const lifecycle = readFileSync(join(repository, 'skills/studio-editor/references/review-cli.md'), 'utf8');
@@ -50,7 +45,6 @@ test('real Studio fixes one text comment and replies to an unsupported request w
   }
   cli(['identity', 'init', '.']);
   const inspected = cli(['inspect', '.', '--text-fields', '--json']);
-  // Fixture setup identifies its sole authored heading; fixing later joins only on anchor IDs.
   const fields = inspected.textFields.filter(field => field.kind === 'heading');
   assert.equal(fields.length, 1);
   const target = fields[0];
@@ -87,7 +81,6 @@ test('real Studio fixes one text comment and replies to an unsupported request w
     schema: 1, reviewId, course: { namespace: null, bound: false }, changeSeq: 2,
     threads: [supportedSeed, unsupportedSeed], receipts: [],
   }));
-  // The store owner validates these fixture bytes before the procedure can read them.
   const supportedId = supportedSeed.id;
   const unsupportedId = unsupportedSeed.id;
 
@@ -158,8 +151,6 @@ test('real Studio fixes one text comment and replies to an unsupported request w
   assert.equal(leftOpen.messages.length, 2);
   assert.equal(leftOpen.messages[1].body, openReply);
 
-  // The original resolve succeeded but its acknowledgement was lost. New feedback
-  // arrives before the identical retry: current facts must not advance the handled watermark.
   const reopened = cli(['comments', 'reopen', '.', supported.id,
     '--expect-version', String(resolved.thread.version), '--request-id', randomUUID(), '--json']);
   const correctionFile = join(root, 'correction.txt');

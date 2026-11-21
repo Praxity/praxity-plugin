@@ -49,8 +49,6 @@ test('BSD tar completes the local installer fixture', { skip: process.platform !
 test('XZ archives are verified before extraction with BSD tar inventory', t => {
   const setup = installation(t, { tool: false }), file = join(setup.root, 'typst.tar.xz');
   if (process.platform === 'win32') {
-    // Native Node receives Windows paths from the fixture adapter. Use native
-    // BSD tar so GNU tar does not interpret the drive colon as a remote host.
     const node = join(setup.root, 'fake node/bin/node');
     writeFileSync(node, readFileSync(node, 'utf8').replace('\nexec ', '\nPATH=/c/Windows/System32:"$PATH" exec '));
     setup.pack.runtimes.node.archives['darwin-arm64'] = archive(join(setup.root, 'fake node'), join(setup.root, 'node archive.tar.gz'));

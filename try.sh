@@ -1,18 +1,6 @@
 #!/bin/sh
-# One-command trial on an Apple Silicon Mac: download Rubato, install the
-# pack, run the doctor, then open Studio's editor on the bundled sample course.
-#
-#   curl -fsSL https://raw.githubusercontent.com/Praxity/rubato/main/try.sh | sh
-#
-# It only touches ~/rubato-main (the downloaded Rubato checkout), ~/.praxity
-# (the installed pack) and a copy of the sample course in ~/praxity-trial-course.
-# Optional downloads (Check's browser, Java, veraPDF) need consent, so run
-# `~/.praxity/bin/praxity setup check` yourself afterwards if you want them.
 set -eu
 
-# `curl | sh` feeds this script to sh through stdin, a line at a time. Any child
-# that reads stdin would swallow the rest of the script, so the body sits in a
-# function that runs only once sh has read all of it, and children get /dev/null.
 main() {
   toolkit="$HOME/rubato-main"
   course="$HOME/praxity-trial-course"
@@ -25,8 +13,6 @@ main() {
   curl -fsSL https://github.com/Praxity/rubato/archive/refs/heads/main.tar.gz | tar xz -C "$HOME"
 
   step "Installing the pack and checking it (no administrator rights needed)"
-  # install.sh ends with the doctor and returns its verdict. Studio can still be
-  # tried when only an optional part failed, so stop only if the launcher is missing.
   if ! (cd "$toolkit" && sh install.sh </dev/null); then
     [ -x "$praxity" ] || { echo "The install failed; the details are above."; exit 1; }
     echo "(the install or the doctor reported a problem above; trying Studio anyway)"
@@ -37,7 +23,6 @@ main() {
   log=$(mktemp "${TMPDIR:-/tmp}/praxity-studio.XXXXXX")
   "$praxity" studio "$course" --no-open </dev/null >"$log" 2>&1 &
   server=$!
-  # The URL carries a private session token, so it is opened directly and never written elsewhere.
   url=""
   tries=0
   while [ -z "$url" ] && [ "$tries" -lt 60 ]; do

@@ -250,7 +250,6 @@ test('extraction and installer launch errors leave the old pack active', async t
 test('update takes no URL or digest arguments and version reports a legacy Studio SHA', async t => {
   const f = fixture(t);
   await assert.rejects(runCli(['update', '--manifest', 'https://example.com/pack.json'], f.context), /Usage: praxity update/);
-  // A manifest without sourceRevision falls back to the SHA in the version suffix.
   delete f.context.pack.tools.find(tool => tool.id === 'studio').sourceRevision;
   f.context.pack.tools.find(tool => tool.id === 'studio').version = '0.3.0-main.e1930acb';
   const lines = [];

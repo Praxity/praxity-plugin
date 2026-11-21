@@ -9,7 +9,6 @@ test('trial downloads Rubato and reaches its installer in the extracted archive'
   const { root, home } = fixture(t);
   const payload = join(root, 'download'), archive = join(root, 'rubato.tar.gz');
   mkdirSync(join(payload, 'rubato-main'), { recursive: true });
-  // Stop before installing anything or launching Studio.
   writeFileSync(join(payload, 'rubato-main/install.sh'), 'echo "Trial installer reached"; exit 1\n');
   const packed = shell(`tar -czf ${quote(posix(archive))} -C ${quote(posix(payload))} rubato-main`);
   assert.equal(packed.status, 0, packed.stderr);

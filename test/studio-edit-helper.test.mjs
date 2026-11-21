@@ -25,7 +25,6 @@ test('prescribed helper invocation uses the active installed runtime with no Nod
   assert.match(step.replace(/\s+/g, ' '), /Quote the runtime, helper and args-file paths/);
   const invocation = step.match(/"<installed-node>" "<skill-directory>\/scripts\/run-praxity.mjs" "<dry-run-args-file>"/)?.[0];
   assert.ok(invocation, 'invocation quotes all paths and does not require global Node');
-  // Follow the documented file-tool lookup, then execute that exact command template.
   const active = readFileSync(join(toolkit, 'active'), 'utf8').split('\n')[0];
   const activePack = join(toolkit, active);
   const state = JSON.parse(readFileSync(join(activePack, 'state.json'), 'utf8'));

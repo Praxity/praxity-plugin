@@ -30,11 +30,7 @@ export function installation(t, options = {}) {
   const runtime = join(root, 'fake node');
   mkdirSync(join(runtime, 'bin'), { recursive: true });
   const binary = process.execPath.replaceAll('\\', '/');
-  // MSYS does not reliably convert paths containing apostrophes for native
-  // Node. The fixture emulates a POSIX Node by converting its filesystem args.
   const nativeArguments = process.platform === 'win32' ? 'for fixture_arg do\n  shift\n  case "$fixture_arg" in /*) fixture_arg=$(cygpath -m "$fixture_arg");; esac\n  set -- "$@" "$fixture_arg"\ndone\n' : '';
-  // The fake archive delegates parsing/finalization to the test's real Node.
-  // Its doctor output is a fake external CLI, independent of doctor unit tests.
   writeFileSync(join(runtime, 'bin/node'), `#!/bin/sh\nif [ "${'$'}{1:-}" = --version ]; then echo v24.22.1; exit 0; fi\ncase "${'$'}{1:-}" in */src/cli.mjs) if [ "${'$'}{2:-}" = doctor ]; then echo 'fixture doctor: ok'; exit 0; fi;; esac\n${nativeArguments}exec ${quote(binary)} "${'$'}@"\n`, { mode: 0o755 });
   writeFileSync(join(runtime, 'LICENSE'), 'Node fixture licence\n');
   pack.runtimes.node.archives['darwin-arm64'] = archive(runtime, join(root, 'node archive.tar.gz'));
@@ -63,10 +59,7 @@ export function installation(t, options = {}) {
   const bin = join(root, 'fixture-bin'); mkdirSync(bin);
   writeFileSync(join(bin, 'uname'), '#!/bin/sh\ncase "$1" in -s) echo Darwin;; -m) echo arm64;; *) exit 99;; esac\n', { mode: 0o755 });
   if (process.platform === 'win32') {
-    // Git Bash lacks stock macOS shasum. Emulate its exact invocation locally.
     writeFileSync(join(bin, 'shasum'), '#!/bin/sh\n[ "$1" = -a ] && [ "$2" = 256 ] || exit 99\nshift 2\nexec sha256sum "$@"\n', { mode: 0o755 });
-    // Git Bash's ps lacks -o. The in-use test runs on POSIX only, so here no
-    // process runs from a test pack.
     writeFileSync(join(bin, 'ps'), '#!/bin/sh\n[ "$*" = "-A -ww -o pid=,args=" ] || exit 99\n', { mode: 0o755 });
     const init = join(root, 'bash-env'); writeFileSync(init, `export PATH=${quote(posix(bin))}:"$PATH"\n`);
     env.BASH_ENV = posix(init);
@@ -76,7 +69,6 @@ export function installation(t, options = {}) {
   return { root, home, pack, manifest, save, env, install, action, toolkit: join(home, '.praxity/toolkit') };
 }
 
-// Adjust an installed fixture while keeping the pack integrity inventory valid.
 export function replaceInstalled(setup, version, file, bytes) {
   const folder = join(setup.toolkit, version), stateFile = join(folder, 'state.json');
   const digest = data => createHash('sha256').update(data).digest('hex');

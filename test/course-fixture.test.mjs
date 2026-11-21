@@ -5,8 +5,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { repository } from './helpers.mjs';
 
-// The reviewed conversion report supplies these expected bytes independently
-// of the fixture. Keep identity and narration with the grammar 4 lesson.
 const approved = {
   '.praxity/identity/course.json': '830a06ef10fbc961560cd412ecd47368fbe3d78833273174120163cf1a985527',
   '.praxity/identity/lessons/d342e19e-bfdf-4532-a8fe-3da35b940412.json': '1524b82ecf0b49889fc724f9c8763aebf4979337ef5db707f479ae851b400aa0',

@@ -1,7 +1,5 @@
 import { readFileSync } from 'node:fs';
 
-// These schemas use this small JSON Schema vocabulary. Unknown keywords fail
-// loudly so a schema edit cannot silently weaken validation.
 const keywords = new Set(['$schema', '$id', '$defs', '$ref', 'title', 'description',
   'type', 'properties', 'required', 'additionalProperties', 'items', 'minItems',
   'minLength', 'maxLength', 'maxItems', 'pattern', 'enum', 'const', 'oneOf', 'allOf', 'minimum', 'maximum']);

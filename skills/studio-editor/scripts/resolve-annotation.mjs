@@ -1,7 +1,6 @@
 import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-// Self-contained so the host can send this function to the preview's main frame.
 export function resolveAnnotationSelector(selector) {
   const pageUrl = document.location.href.split('#')[0];
   const refuse = reason => ({ status: 'refused', reason, pageUrl });
@@ -35,7 +34,6 @@ export function resolveAnnotationSelector(selector) {
     }
     return null;
   };
-  // Compare attribute values as data. An ID is not a CSS selector or authority.
   const occurrences = Array.from(document.querySelectorAll('[data-node-id]'))
     .filter(element => element.getAttribute('data-node-id') === nodeId)
     .map(element => ({
@@ -58,7 +56,6 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
     if (selector !== null && typeof selector !== 'string') throw new Error('selector type');
     process.stdout.write(`(${resolveAnnotationSelector.toString()})(${JSON.stringify(selector)})`);
   } catch {
-    // Do not echo untrusted file contents or parser errors into tool output.
     process.stderr.write('Cannot build annotation expression. Use --expression <selector-file> with a readable JSON string or null.\n');
     process.exitCode = 1;
   }
