@@ -83,6 +83,48 @@ Praxity's tools execute locally. The chosen host and model provider control
 telemetry and what they transmit. An editor capability URL can enter the host's
 tool transcript.
 
+## Install the skills plugin
+
+The Praxity plugin adds seven skills for course writing, Studio editing, accessibility
+checks, Trace reports and PDF output. It installs instructions, not the tools.
+The skills currently call Rubato's `~/.praxity/bin/praxity` launcher, so they require
+an existing Rubato installation. npm command migration is still pending.
+
+### Claude Code
+
+1. In a terminal, run `claude plugin marketplace add Praxity/rubato`.
+2. Run `claude plugin install praxity@praxity`.
+3. Start a new Claude Code session in your course folder and use `/praxity:composer`.
+
+Recent Claude Code versions also support `/plugin install praxity --marketplace Praxity/rubato` inside a session.
+
+### Codex CLI
+
+1. In a terminal, run `codex plugin marketplace add Praxity/rubato`.
+2. Run `codex plugin add praxity@praxity`.
+3. Start a new Codex session in your course folder and select composer from the `$` skill picker.
+
+In T3 Code, install through the CLI for the provider selected in your thread,
+then start a new session with that provider.
+
+### Maintain the plugin
+
+Rubato owns `skills/`; the tool repositories own their packaged skills.
+`node scripts/build-plugin.mjs` downloads the four tool archives pinned by
+`pack.json`, verifies their SHA-256 digests and uses the existing adapter collector
+to generate `plugins/praxity/skills/` and its `skills-lock.json` inventory.
+Print supplies a skill too. `install-praxity` remains in the legacy installer but
+is excluded from the plugin because it teaches that installer's setup and repair.
+
+Before regeneration, remove only the previous generated `plugins/praxity/skills/`
+and `dist/plugin-build/` directories. Review and commit the regenerated files and
+inventory together. Remove `dist/plugin-build/` after checking the output.
+`node --test test/plugin.test.mjs` checks both catalogues and manifests, all seven
+skill folders, canonical Rubato bytes, archive pins and every generated file hash.
+The checked-in payload lets either host install without a build or runtime download.
+Change a tool-owned skill in its tool repository, then update its archive pin and
+regenerate. Increment both plugin manifest versions when shipping changed skills.
+
 ## Try it
 
 On an Apple Silicon or Intel Mac, one command downloads Rubato, installs the pack, runs
