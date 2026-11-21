@@ -10,9 +10,9 @@ The bootstrap must select a trusted runtime before Node validation can run. Publ
 
 ## Decision
 
-- `install.sh` resolves the installation home once and rejects symlink descendants before writes. Its platform selection detects a translated Apple Silicon shell and selects native runtimes, because that shell reports x86_64. Its install plan still verifies the cached Node archive even after bootstrap verification; only duplicate logging is suppressed.
+- `install.sh` assigns the canonical home to `INSTALL_HOME` and calls `contained` from `scripts/install-paths.sh` to reject symlink descendants before writes. Its top-level platform-selection branch detects a translated Apple Silicon shell and selects native runtimes, because that shell reports x86_64. Its install plan still verifies the cached Node archive even after bootstrap verification; only duplicate logging is suppressed.
 
-- `src/install.mjs` checks artifact ancestors before generated writes. Its finalization writes wrappers relative to the installed pack, because staging paths disappear after activation; the shared Node also runs Check's compiled entry.
+- `src/install.mjs` calls `inspectStage` at the start of its `command === 'finalize'` branch to check artifact ancestors before generated writes. That branch writes wrappers relative to the installed pack, because staging paths disappear after activation; the shared Node also runs Check's compiled entry.
 
 - `src/archive-inventory.mjs` `archiveInventory` hashes gzip members in one pass and uses BSD tar for XZ. This avoids adding an xz executable to bootstrap requirements; the pinned Typst XZ archive is small.
 
