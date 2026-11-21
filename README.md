@@ -15,8 +15,12 @@ that runs every tool, plus skills that tell your agent how to use them.
 
 Studio opens courses written in grammar 4, the current version of Praxity's
 course file format. The sample course below and any course your agent writes
-with Rubato's skills use grammar 4. Studio can't open courses in the older
-grammar 3 format, and no converter is available.
+with Rubato's skills use grammar 4.
+
+If you open a course in the older grammar 3 format, Studio says "Grammar 3 is
+no longer supported." The converter command in that message isn't publicly
+available, so such a course can't be converted yet. A course that an earlier
+Rubato's Studio opened is grammar 4 and still opens.
 
 What changed in this release: [0.2.0 release notes](docs/release-notes/0.2.0.md).
 Earlier notes are in [`docs/release-notes/`](docs/release-notes/).
@@ -41,7 +45,7 @@ rights. Run each block in Terminal.
 
    ```sh
    cd ~
-   mkdir rubato-0.2.0 && cd rubato-0.2.0
+   mkdir -p rubato-0.2.0 && cd rubato-0.2.0
    base=https://github.com/Praxity/rubato/releases/download/v0.2.0
    curl -fsSLO "$base/rubato-0.2.0.tar.gz"
    curl -fsSLO "$base/SHA256SUMS"
@@ -128,9 +132,9 @@ them yourself in a course folder:
 |---|---|
 | `praxity studio .` | Opens the course in this folder in Studio. |
 | `praxity export . --format html --output course-html.zip` | Exports the course as HTML. Use `--format pdf --output course.pdf` for PDF. |
+| `praxity setup check html` | Downloads the browser Check needs to audit HTML, after asking you. Run it once before your first audit. |
 | `praxity check check course-html.zip --checks accessibility` | Runs Check's accessibility audit on the exported course. |
 | `praxity doctor` | Tests every tool and tells you how to fix what's wrong. See [Doctor](#doctor). |
-| `praxity setup check` | Offers Check's optional downloads, and asks before each one. |
 | `praxity version` | Shows the installed Rubato version. |
 
 Trace and Print take more options. Ask your agent to run them, or run
@@ -154,12 +158,18 @@ and runs the doctor. If a download, a check or the doctor fails, your current
 version stays active. When the new version is in place, the installer prints
 `Installed pack` and the new version number.
 
-Update then refreshes your skills. If only that step fails, the new version
-stays active, and the message names the command to run again. Start a new
-agent session to pick up changed skills.
+Update then refreshes your user skills, and the project skills of the folder
+you run it in, or of the nearest folder above it that has Rubato project
+skills. For other projects with project skills, run
+`praxity skills refresh --scope project` in each. If only the skill refresh
+fails, the new version stays active, and the message names the command to run
+again. Start a new agent session to pick up changed skills.
 
 Rubato 0.1.1 and earlier don't have `praxity update`. To move from those, follow
-[Install Rubato 0.2.0](#install-rubato-020). Your courses and skills stay.
+[Install Rubato 0.2.0](#install-rubato-020). Your courses stay. Then run
+`praxity doctor`. If it shows your skills as `partial`, do what its `fix:`
+says. If installing skills stops because the folders already exist, see
+[Your own edits](#your-own-edits).
 
 ## Course actions in T3 Code
 
@@ -197,7 +207,8 @@ Studio didn't start.
 If Studio reports that its port is in use, Studio is probably already running
 for this course in another T3 action or Terminal window. Stop it there. To see
 what holds the port, run `lsof -nP -iTCP:<port> -sTCP:LISTEN` with the port
-number from Studio's message.
+number from Studio's message. The first column names the program. If it's
+another app, quit that app, then try again.
 
 ### After an update
 
@@ -286,8 +297,10 @@ or use `--host codex`. Skills for the other host stay.
 ## Doctor
 
 Run `praxity doctor` to test the install. It compiles a small document with
-Typst, has Studio inspect a small sample course, and runs Check, Trace and
-Print on test inputs. Each line shows one check:
+Typst, has Studio inspect a small sample course, runs Trace and Print on test
+inputs, and asks Check whether its browser, Java and veraPDF are ready. It also
+checks whether your courses' T3 actions are out of date. Each line shows one
+check:
 
 ```text
 <check>: <status> | <what it found> | fix: <what to do>
@@ -296,13 +309,13 @@ Print on test inputs. Each line shows one check:
 | Status | Meaning |
 |---|---|
 | `ok` | Works. |
-| `failed` | Broken. Run the command after `fix:`. |
-| `partial` | Some skills are missing or edited. Run the command after `fix:` to refresh them. |
-| `not-installed` | Not set up. For Typst or a tool, run the command after `fix:`. For skills of a host you don't use, or an optional download, you can leave it. |
+| `failed` | Broken. Do what `fix:` says. |
+| `partial` | Some skills are missing or edited, or a course's T3 actions are out of date. Do what `fix:` says. |
+| `not-installed` | Not set up. For Typst or a tool, do what `fix:` says. Check's browser is needed to audit HTML: run `praxity setup check html`. Skills for a host you don't use, and Check's Java and veraPDF if you don't check PDFs, can stay missing. |
 | `declined` | An optional download you said no to in setup. |
 
-Fix every `failed` line, and any `not-installed` line for Typst or a tool,
-before you continue. The doctor doesn't open the
+Fix every `failed` line, and any `not-installed` line for Typst, a tool or a
+component you need, before you continue. The doctor doesn't open the
 editor or run a full Check audit.
 
 ## Fix a failed install
@@ -368,8 +381,9 @@ are, including each course's `.praxity/` identity folder, `t3.json` and
    sh install.sh uninstall
    ```
 
-   If you deleted that folder, download and unpack the release again, as in
-   steps 1 to 3 of [Install](#install-rubato-020), without running the installer.
+   If you deleted that folder, run steps 1 to 3 of
+   [Install](#install-rubato-020) again, but leave out the last line of step 3,
+   `sh install.sh`. Then run the two commands above.
 4. If you ran Check's setup, remove its optional downloads (browser, Java,
    veraPDF):
 
@@ -437,7 +451,7 @@ your agent instead of running the rest yourself:
 
 ## Development
 
-Use Node >=24.18 and <25. There are no runtime package dependencies. Run `npm ci` to install the development-only comment checker dependency.
+Use Node >=24.22.1 and <25. There are no runtime package dependencies. Run `npm ci` to install the development-only comment checker dependency.
 
 ```sh
 npm run lint
@@ -485,9 +499,9 @@ curl -fsSL https://raw.githubusercontent.com/Praxity/rubato/main/try.sh | sh
 ```
 
 Read [`try.sh`](try.sh) first if you prefer; it touches only `~/rubato-main`,
-`~/.praxity` and `~/praxity-trial-course`. If `~/rubato-main` already exists,
-the script stops without changing anything; move or delete that folder and run
-it again. It reuses an existing `~/praxity-trial-course`. If the install fails
+`~/.praxity` and `~/praxity-trial-course`. Before you run it, move or delete
+any existing `~/rubato-main` folder. The script in this repository stops if
+that folder exists, but copies from before 0.2.0 delete it. It reuses an existing `~/praxity-trial-course`. If the install fails
 but an earlier Rubato is installed, it opens Studio from that earlier version.
 Press Ctrl+C to stop Studio.
 
