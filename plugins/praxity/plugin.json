@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "praxity",
+  "version": "0.1.0",
+  "description": "Write, edit and review Praxity courses.",
+  "author": {
+    "name": "Praxity"
+  },
+  "repository": "https://github.com/Praxity/rubato",
+  "license": "MIT"
+}

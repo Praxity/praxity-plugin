@@ -1,0 +1,17 @@
+{
+  "name": "praxity",
+  "plugins": [
+    {
+      "name": "praxity",
+      "source": {
+        "source": "local",
+        "path": "./plugins/praxity"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

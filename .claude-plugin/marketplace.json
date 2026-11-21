@@ -1,0 +1,13 @@
+{
+  "name": "praxity",
+  "owner": {
+    "name": "Praxity"
+  },
+  "plugins": [
+    {
+      "name": "praxity",
+      "source": "./plugins/praxity"
+    }
+  ],
+  "description": "Praxity course writing, editing and review skills."
+}
